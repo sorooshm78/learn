@@ -1,5 +1,5 @@
 import numpy as np
-from enum import Enum
+import random
 
 
 def up(x, y):
@@ -18,6 +18,10 @@ def left(x, y):
     return x, y - 1
 
 
+def make_shape(matrix, count, shape):
+    pass
+
+
 row = 5
 col = 5
 val = "o"
@@ -29,16 +33,25 @@ x = 2
 y = 2
 
 matrix[x, y] = "x"
-print(matrix)
+
+# print(matrix)
 
 matrix[up(x, y)] = "u"
-print(matrix)
-
 matrix[down(x, y)] = "d"
-print(matrix)
-
 matrix[right(x, y)] = "r"
+matrix[left(x, y)] = "l"
+
 print(matrix)
 
-matrix[left(x, y)] = "l"
-print(matrix)
+
+def random_point():
+    while True:
+        x = random.randrange(row)
+        y = random.randrange(col)
+        print(x, y)
+        if matrix[x, y] == "o":
+            return x, y
+
+
+point = random_point()
+print(point)
