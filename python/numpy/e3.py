@@ -2,56 +2,63 @@ import numpy as np
 import random
 
 
-def up(x, y):
-    return x - 1, y
+row = 10
+col = 10
+empty = "o"
+ship = "x"
+
+matrix = np.full((row, col), empty)
 
 
-def down(x, y):
-    return x + 1, y
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
-
-def right(x, y):
-    return x, y + 1
-
-
-def left(x, y):
-    return x, y - 1
-
-
-def make_shape(matrix, count, shape):
-    pass
-
-
-row = 5
-col = 5
-val = "o"
-
-
-matrix = np.full((row, col), val)
-
-x = 2
-y = 2
-
-matrix[x, y] = "x"
-
-# print(matrix)
-
-matrix[up(x, y)] = "u"
-matrix[down(x, y)] = "d"
-matrix[right(x, y)] = "r"
-matrix[left(x, y)] = "l"
-
-print(matrix)
+    def __str__(self):
+        return f"({self.x}, {self.y})"
 
 
 def random_point():
     while True:
         x = random.randrange(row)
         y = random.randrange(col)
-        print(x, y)
-        if matrix[x, y] == "o":
-            return x, y
+        return Point(x, y)
+        if matrix[x, y] == empty:
+            return Point(x, y)
 
 
-point = random_point()
-print(point)
+def slice_with_direct(point, count, direction):
+    if direction == "up":
+        return Point(slice(point.x - count + 1, point.x + 1), point.y)
+
+    if direction == "down":
+        return Point(slice(point.x, point.x + count), point.y)
+
+    if direction == "right":
+        return Point(point.x, slice(point.y, point.y + count))
+
+    if direction == "left":
+        return Point(point.x, slice(point.y - count + 1, point.y + 1))
+
+
+def make_shape(count, shape):
+    while True:
+        point = random_point()
+        print(point)
+        directs = np.array(["up", "down", "right", "left"])
+        random.shuffle(directs)
+        for direct in directs:
+            print(direct)
+            p = slice_with_direct(point, count, direct)
+            if len(matrix[p.x, p.y]) == count:
+                if shape not in matrix[p.x, p.y]:
+                    matrix[p.x, p.y] = shape
+                    return
+
+
+make_shape(4, ship)
+make_shape(4, ship)
+make_shape(4, ship)
+make_shape(4, ship)
+print(matrix)
