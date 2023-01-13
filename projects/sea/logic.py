@@ -120,14 +120,12 @@ class Table:
         return None
 
     def select_ship(self, point):
-        for index in range(len(self.ships)):
-            if self.ships[index].check_inside_of_points(point.x, point.y):
-                self.ships[index].damage()
-                if not self.ships[index].is_alive:
-                    area = self.ships[index].area
-                    points = self.ships[index].points
-                    self.coordinates[area.x, area.y] = Cell.select.value
-                    self.coordinates[points.x, points.y] = Cell.target.value
+        for ship in self.ships:
+            if ship.check_inside_of_points(point.x, point.y):
+                ship.damage()
+                if not ship.is_alive:
+                    self.coordinates[ship.area.x, ship.area.y] = Cell.select.value
+                    self.coordinates[ship.points.x, ship.points.y] = Cell.target.value
 
     def select_cell(self, point):
         selecte_cell = self.coordinates[point.x, point.y]
