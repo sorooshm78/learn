@@ -22,33 +22,33 @@ class Cell(Enum):
 
 class Ship:
     def __init__(self, point, length, direct):
+        self.points = self.get_points_by_direct(point, length, direct)
+        self.area = self.get_area_points()
+        self.health = length
+        self.is_alive = True
+
+    def get_points_by_direct(self, point, length, direct):
         if direct == "up":
-            self.points = Point(
+            return Point(
                 slice(point.x - length + 1, point.x + 1), slice(point.y, point.y + 1)
             )
 
-        if direct == "down":
-            self.points = Point(
-                slice(point.x, point.x + length), slice(point.y, point.y + 1)
-            )
+        elif direct == "down":
+            return Point(slice(point.x, point.x + length), slice(point.y, point.y + 1))
 
-        if direct == "right":
-            self.points = Point(
-                slice(point.x, point.x + 1), slice(point.y, point.y + length)
-            )
+        elif direct == "right":
+            return Point(slice(point.x, point.x + 1), slice(point.y, point.y + length))
 
-        if direct == "left":
-            self.points = Point(
+        elif direct == "left":
+            return Point(
                 slice(point.x, point.x + 1), slice(point.y - length + 1, point.y + 1)
             )
 
-        self.area = Point(
+    def get_area_points(self):
+        return Point(
             slice(max(0, self.points.x.start - 1), max(0, self.points.x.stop + 1)),
             slice(max(0, self.points.y.start - 1), max(0, self.points.y.stop + 1)),
         )
-
-        self.health = length
-        self.is_alive = True
 
     def check_inside_of_points(self, x, y):
         if x in range(self.points.x.start, self.points.x.stop) and y in range(
@@ -56,6 +56,12 @@ class Ship:
         ):
             return True
         return False
+
+    def damage(self):
+        if self.is_alive:
+            self.health -= 1
+        if self.health == 0:
+            self.is_alive = False
 
 
 class Table:
@@ -144,10 +150,3 @@ class SeaBattle:
 
 sea = SeaBattle("1")
 print(sea.get_table_game())
-
-# ship = Ship(Point(1, 1), 2, "right")
-
-# print(ship.points)
-
-# x = 2
-# y = 4
