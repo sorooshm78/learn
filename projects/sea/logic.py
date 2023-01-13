@@ -117,8 +117,31 @@ class Table:
             ship.area
         ):
             return ship
-
         return None
+
+    def select_ship(self, point):
+        for index in range(len(self.ships)):
+            if self.ships[index].check_inside_of_points(point.x, point.y):
+                self.ships[index].damage()
+                if not self.ships[index].is_alive:
+                    area = self.ships[index].area
+                    points = self.ships[index].points
+                    self.coordinates[area.x, area.y] = Cell.select.value
+                    self.coordinates[points.x, points.y] = Cell.target.value
+
+    def select_cell(self, point):
+        selecte_cell = self.coordinates[point.x, point.y]
+
+        if selecte_cell == Cell.ship.value:
+            self.select_ship(point)
+            cell = Cell.target.value
+        elif selecte_cell == Cell.target.value:
+            cell = Cell.target.value
+        else:
+            cell = Cell.select.value
+
+        self.coordinates[point.x, point.y] = cell
+        return cell
 
 
 # Manage Game
@@ -133,14 +156,7 @@ class SeaBattle:
         return self.table.coordinates
 
     def select_cell(self, x, y):
-        selecte_cell = self.table.coordinates[x, y]
-        if selecte_cell == Cell.ship.value or selecte_cell == Cell.target.value:
-            cell = Cell.target.value
-        else:
-            cell = Cell.select.value
-
-        self.table.coordinates[x, y] = cell
-        return cell
+        return self.table.select_cell(Point(x, y))
 
     def is_end_game(self):
         if Cell.ship.value not in self.table.coordinates:
