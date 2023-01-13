@@ -42,16 +42,20 @@ class Ship:
                 slice(point.x, point.x + 1), slice(point.y - length + 1, point.y + 1)
             )
 
-        self.range_points = Point(
+        self.area = Point(
             slice(max(0, self.points.x.start - 1), max(0, self.points.x.stop + 1)),
             slice(max(0, self.points.y.start - 1), max(0, self.points.y.stop + 1)),
         )
 
-    def get_points(self):
-        return self.points
+        self.health = length
+        self.is_alive = True
 
-    def get_range_points(self):
-        return self.range_points
+    def check_inside_of_points(self, x, y):
+        if x in range(self.points.x.start, self.points.x.stop) and y in range(
+            self.points.y.start, self.points.y.stop
+        ):
+            return True
+        return False
 
 
 class Table:
@@ -60,16 +64,13 @@ class Table:
 
     def __init__(self):
         self.coordinates = np.full((self.row, self.col), Cell.empty.value)
-        self.ships = []
         self.make_ships()
 
     def make_ships(self):
-        self.make_ship(4)
-        self.make_ship(3)
-        self.make_ship(2)
-        self.make_ship(2)
-        self.make_ship(1)
-        self.make_ship(1)
+        list_lenght_ships = [4, 3, 3, 2, 2, 1, 1]
+        self.ships = []
+        for length in list_lenght_ships:
+            self.ships.append(self.make_ship(length))
 
     def make_ship(self, length):
         while True:
@@ -80,8 +81,7 @@ class Table:
                 ship = self.get_ship(point, length, direct)
                 if ship is not None:
                     self.coordinates[ship.points.x, ship.points.y] = Cell.ship.value
-                    self.ships.append(ship)
-                    return
+                    return ship
 
     def get_random_empty_point(self):
         while True:
@@ -90,19 +90,29 @@ class Table:
             if self.coordinates[x, y] == Cell.empty.value:
                 return Point(x, y)
 
+    def check_points_valid(self, points):
+        if points.x.start < 0 or points.y.start < 0:
+            return False
+
+        if points.x.stop > self.row - 1 or points.y.stop > self.col - 1:
+            return False
+
+        return True
+
+    def check_area_ship_valid(self, area):
+        if Cell.ship.value in self.coordinates[area.x, area.y]:
+            return False
+        return True
+
     def get_ship(self, point, length, direct):
         ship = Ship(point, length, direct)
 
-        point = ship.get_points()
-        range_points = ship.get_range_points()
+        if self.check_points_valid(ship.points) and self.check_area_ship_valid(
+            ship.area
+        ):
+            return ship
 
-        if self.coordinates[point.x, point.y].size != length:
-            return None
-
-        if Cell.ship.value in self.coordinates[range_points.x, range_points.y]:
-            return None
-
-        return ship
+        return None
 
 
 # Manage Game
@@ -134,3 +144,10 @@ class SeaBattle:
 
 sea = SeaBattle("1")
 print(sea.get_table_game())
+
+# ship = Ship(Point(1, 1), 2, "right")
+
+# print(ship.points)
+
+# x = 2
+# y = 4
