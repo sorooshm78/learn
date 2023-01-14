@@ -84,7 +84,7 @@ class Table:
             directs = np.array(["up", "down", "right", "left"])
             random.shuffle(directs)
             for direct in directs:
-                ship = self.get_ship(point, length, direct)
+                ship = self.get_random_ship(point, length, direct)
                 if ship is not None:
                     self.coordinates[ship.points.x, ship.points.y] = Cell.ship.value
                     return ship
@@ -110,7 +110,7 @@ class Table:
             return False
         return True
 
-    def get_ship(self, point, length, direct):
+    def get_random_ship(self, point, length, direct):
         ship = Ship(point, length, direct)
 
         if self.check_points_valid(ship.points) and self.check_area_ship_valid(
@@ -126,20 +126,18 @@ class Table:
                 if not ship.is_alive:
                     self.coordinates[ship.area.x, ship.area.y] = Cell.select.value
                     self.coordinates[ship.points.x, ship.points.y] = Cell.target.value
+                    return ship.area
 
     def select_cell(self, point):
         selecte_cell = self.coordinates[point.x, point.y]
 
         if selecte_cell == Cell.ship.value:
-            self.select_ship(point)
-            cell = Cell.target.value
-        elif selecte_cell == Cell.target.value:
-            cell = Cell.target.value
-        else:
-            cell = Cell.select.value
+            point = self.select_ship(point)
+            return point
 
-        self.coordinates[point.x, point.y] = cell
-        return cell
+        elif selecte_cell == Cell.empty.value:
+            self.coordinates[point.x, point.y] = Cell.select.value
+            return Point(slice(point.x, point.x + 1), slice(point.y, point.y + 1))
 
 
 # Manage Game
@@ -154,7 +152,19 @@ class SeaBattle:
         return self.table.coordinates
 
     def select_cell(self, x, y):
-        return self.table.select_cell(Point(x, y))
+        points = self.table.select_cell(Point(x, y))
+
+        data = []
+        for x in range(points.x.start, points.x.stop):
+            for y in range(points.y.start, points.y.stop):
+                data.append(
+                    {
+                        "x": x,
+                        "y": y,
+                        "result": self.table.coordinates[x, y],
+                    }
+                )
+        return data
 
     def is_end_game(self):
         if Cell.ship.value not in self.table.coordinates:
