@@ -18,8 +18,8 @@ asyncio.run(main())
 
 
 async def main():
-    # print(normal())  # will print 45
-    # print(await normal())  # TypeError: object int can't be used in 'await' expression
+    print(normal())  # will print 45
+    print(await normal())  # TypeError: object int can't be used in 'await' expression
 
 
 asyncio.run(main())
