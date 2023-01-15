@@ -84,3 +84,23 @@ asyncio.run(main())
 # finish not io bound
 # io bound
 # finished at 15:13:25
+
+
+async def main():
+    task1 = asyncio.create_task(say_after(2, "io bound"))
+    task2 = asyncio.create_task(not_io_bound())
+    task3 = asyncio.create_task(not_io_bound())
+
+    print(f"started at {time.strftime('%X')}")
+    await task1
+    await task2
+    await task3
+    print(f"finished at {time.strftime('%X')}")
+
+
+asyncio.run(main())
+# started at 18:54:40
+# finish not io bound
+# finish not io bound
+# io bound
+# finished at 18:54:51
