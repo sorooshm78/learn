@@ -1,0 +1,23 @@
+16:10:24.58 [ERROR] Exception caught: (pants.engine.internals.scheduler.ExecutionError)
+  File "/home/sm/.cache/pants/setup/bootstrap-Linux-x86_64/2.4.1_py38/lib/python3.8/site-packages/pants/bin/local_pants_runner.py", line 229, in _run_inner
+    return self._perform_run(goals)
+  File "/home/sm/.cache/pants/setup/bootstrap-Linux-x86_64/2.4.1_py38/lib/python3.8/site-packages/pants/bin/local_pants_runner.py", line 168, in _perform_run
+    return self._perform_run_body(goals, poll=False)
+  File "/home/sm/.cache/pants/setup/bootstrap-Linux-x86_64/2.4.1_py38/lib/python3.8/site-packages/pants/bin/local_pants_runner.py", line 185, in _perform_run_body
+    return self.graph_session.run_goal_rules(
+  File "/home/sm/.cache/pants/setup/bootstrap-Linux-x86_64/2.4.1_py38/lib/python3.8/site-packages/pants/init/engine_initializer.py", line 135, in run_goal_rules
+    exit_code = self.scheduler_session.run_goal_rule(
+  File "/home/sm/.cache/pants/setup/bootstrap-Linux-x86_64/2.4.1_py38/lib/python3.8/site-packages/pants/engine/internals/scheduler.py", line 530, in run_goal_rule
+    self._raise_on_error([t for _, t in throws])
+  File "/home/sm/.cache/pants/setup/bootstrap-Linux-x86_64/2.4.1_py38/lib/python3.8/site-packages/pants/engine/internals/scheduler.py", line 498, in _raise_on_error
+    raise ExecutionError(
+
+Exception message: 1 Exception encountered:
+
+  ResolveError: No owning targets could be found for the file `main/main.py`.
+
+Please check that there is a BUILD file in `main` with a target whose `sources` field includes `main/main.py`. See https://www.pantsbuild.org/v2.4/docs/targets for more information on target definitions.
+If you would like to ignore un-owned files, please pass `--owners-not-found-behavior=ignore`.
+
+
+(Use --print-stacktrace to see more error details.)
