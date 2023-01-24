@@ -103,11 +103,11 @@ class Sea:
 
         return posible_points
 
-    def mark_as_ship(self, points, ship):
+    def mark_cell_as_ship(self, points, ship):
         for cell in self.coordinates[points.x, points.y].flatten():
             cell.ship = ship
 
-    def mark_as_selected(self, points):
+    def mark_cell_as_selected(self, points):
         for cell in self.coordinates[points.x, points.y].flatten():
             cell.is_selected = True
 
@@ -120,7 +120,7 @@ class Sea:
             for direct in directs:
                 ship = self.get_random_ship(point, length, direct)
                 if ship is not None:
-                    self.mark_as_ship(ship.points, ship)
+                    self.mark_cell_as_ship(ship.points, ship)
                     return ship
 
         raise Exception(f"Not Make Ship by length {length}")
@@ -153,7 +153,7 @@ class Sea:
 
         ship.damage()
         if not ship.is_alive():
-            self.mark_as_selected(ship.area)
+            self.mark_cell_as_selected(ship.area)
             return ship.area
         else:
             cell.is_selected = True
