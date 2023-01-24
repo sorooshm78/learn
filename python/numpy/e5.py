@@ -25,16 +25,36 @@ class Cell:
 # print(arr)
 
 
+# arr = np.empty((3, 3), dtype=object)
+
+# for y, x in np.ndindex(arr.shape):
+#     arr[y, x] = Cell()
+
+# print(arr)
+
+# print("*********")
+
+# c = Cell(10, 10)
+# arr[0, 0:3] = Cell(10, 10)
+
+# print(arr)
+
+
+class Cell:
+    def __init__(self, ship=None):
+        self.ship = ship
+
+
+class Ship:
+    name = ""
+
+
 arr = np.empty((3, 3), dtype=object)
 
 for y, x in np.ndindex(arr.shape):
     arr[y, x] = Cell()
 
-print(arr)
 
-print("*********")
-
-c = Cell(10, 10)
-arr[0, 0:3] = Cell(10, 10)
-
-print(arr)
+for y, x in np.ndindex(arr[0:1, 0:2].shape):
+    print(f"({x}, {y})")
+    print(arr[x, y])
