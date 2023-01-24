@@ -8,10 +8,10 @@ class Cell:
         self.ship = ship
         self.is_selected = False
 
-    def is_empty(self):
+    def is_ship(self):
         if self.ship == None:
-            return True
-        return False
+            return False
+        return True
 
 
 class Direct(Enum):
@@ -98,10 +98,18 @@ class Sea:
     def get_posible_points(self):
         posible_points = []
         for y, x in np.ndindex(self.coordinates.shape):
-            if self.coordinates[x, y].is_empty():
+            if not self.coordinates[x, y].is_ship():
                 posible_points.append(Point(x, y))
 
         return posible_points
+
+    def mark_as_ship(self, points, ship):
+        for cell in self.coordinates[points.x, points.y].flatten():
+            cell.ship = ship
+
+    def mark_as_selected(self, points):
+        for cell in self.coordinates[points.x, points.y].flatten():
+            cell.is_selected = True
 
     def make_ship(self, length):
         posible_points = self.get_posible_points()
@@ -112,10 +120,7 @@ class Sea:
             for direct in directs:
                 ship = self.get_random_ship(point, length, direct)
                 if ship is not None:
-                    for cell in self.coordinates[
-                        ship.points.x, ship.points.y
-                    ].flatten():
-                        cell.ship = ship
+                    self.mark_as_ship(ship.points, ship)
                     return ship
 
         raise Exception(f"Not Make Ship by length {length}")
@@ -131,7 +136,7 @@ class Sea:
 
     def is_area_ship_valid(self, area):
         for cell in self.coordinates[area.x, area.y].flatten():
-            if not cell.is_empty():
+            if cell.is_ship():
                 return False
         return True
 
@@ -143,25 +148,22 @@ class Sea:
         return None
 
     def target_ship(self, point):
-        # FIXME try to remove for by adding ship to cells
         ship = self.coordinates[point.x, point.y].ship
         ship.damage()
         if not ship.is_alive():
-            for cell in self.coordinates[ship.area.x, ship.area.y].flatten():
-                cell.is_sellected = True
+            self.mark_as_selected(ship.area)
             return ship.area
         else:
-            for cell in self.coordinates[point.x, point.y].flatten():
-                cell.is_selected = True
+            ship.is_selected = True
             return Point(slice(point.x, point.x + 1), slice(point.y, point.y + 1))
 
-    def get_changes(self, point):
+    def get_changes_by_bomb_attack(self, point):
         selected_cell = self.coordinates[point.x, point.y]
 
-        if not selected_cell.is_empty():
+        if selected_cell.is_ship():
             return self.target_ship(point)
 
-        elif selected_cell.is_empty():
+        else:
             selected_cell.is_selected = True
             return Point(slice(point.x, point.x + 1), slice(point.y, point.y + 1))
 
