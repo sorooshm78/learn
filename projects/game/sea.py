@@ -105,7 +105,7 @@ class Sea:
 
     def mark_as_ship(self, points, ship):
         for cell in self.coordinates[points.x, points.y].flatten():
-            cell.ship = ship
+            ship = ship
 
     def mark_as_selected(self, points):
         for cell in self.coordinates[points.x, points.y].flatten():
@@ -148,13 +148,15 @@ class Sea:
         return None
 
     def target_ship(self, point):
-        ship = self.coordinates[point.x, point.y].ship
+        cell = self.coordinates[point.x, point.y]
+        ship = cell.ship
+
         ship.damage()
         if not ship.is_alive():
             self.mark_as_selected(ship.area)
             return ship.area
         else:
-            ship.is_selected = True
+            cell.is_selected = True
             return Point(slice(point.x, point.x + 1), slice(point.y, point.y + 1))
 
     def get_changes_by_bomb_attack(self, point):
