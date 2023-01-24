@@ -105,7 +105,7 @@ class Sea:
 
     def mark_as_ship(self, points, ship):
         for cell in self.coordinates[points.x, points.y].flatten():
-            ship = ship
+            cell.ship = ship
 
     def mark_as_selected(self, points):
         for cell in self.coordinates[points.x, points.y].flatten():
