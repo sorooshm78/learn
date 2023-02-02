@@ -9,12 +9,17 @@ def normal():
     return 45
 
 
+########################
+
+
 async def main():
     nested()  # RuntimeWarning: coroutine 'nested' was never awaited
     print(await nested())  # will print "42".
 
 
 asyncio.run(main())
+
+#########################
 
 
 async def main():
