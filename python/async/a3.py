@@ -11,7 +11,7 @@ async def say_after(delay, what):
 #########################
 
 
-behaviar await
+# behaviar await
 async def main():
     task1 = asyncio.create_task(say_after(2, "task1"))
     task2 = asyncio.create_task(say_after(1, "task2"))
