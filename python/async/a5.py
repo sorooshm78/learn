@@ -1,5 +1,5 @@
 import asyncio
-from asyncio.exceptions import CancelledError, TimeoutError
+from asyncio.exceptions import TimeoutError
 
 
 async def something():
