@@ -2,26 +2,26 @@ import asyncio
 import aiohttp
 
 
-# async def show_status(session, url, delay):
-#     await asyncio.sleep(delay)
-#     async with session.get(url) as res:
-#         print(f"status url {url} and delay {delay} is {res.status}")
+async def show_status(session, url, delay):
+    await asyncio.sleep(delay)
+    async with session.get(url) as res:
+        print(f"status url {url} and delay {delay} is {res.status}")
 
 
-# async def main():
-#     async with aiohttp.ClientSession() as session:
-#         requests = [
-#             show_status(session, "https://docs.python.org/", 2),
-#             show_status(session, "https://docs.python.org/", 4),
-#             show_status(session, "https://docs.python.org/", 6),
-#             show_status(session, "https://docs.python.org/", 8),
-#         ]
+async def main():
+    async with aiohttp.ClientSession() as session:
+        requests = [
+            show_status(session, "https://docs.python.org/", 2),
+            show_status(session, "https://docs.python.org/", 4),
+            show_status(session, "https://docs.python.org/", 6),
+            show_status(session, "https://docs.python.org/", 8),
+        ]
 
-#         for res in asyncio.as_completed(requests):
-#             await res
+        for res in asyncio.as_completed(requests):
+            await res
 
 
-# asyncio.run(main())
+asyncio.run(main())
 # status url https://docs.python.org/ and delay 2 is 200
 # status url https://docs.python.org/ and delay 4 is 200
 # status url https://docs.python.org/ and delay 6 is 200
