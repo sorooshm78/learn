@@ -1,0 +1,25 @@
+# add to stage
+git add <file>
+
+
+# add stage to repository 
+git commit -m "<message>"
+
+
+# to unstage (Remove New Files from Staged Files)
+git restore --staged <file>
+
+
+# to discard changes in working directory (Remove Existing Files from Staged Files)
+git restore <file>
+
+
+# move stage to last commit -> The command can also be used to restore the content in the index with --staged, or restore both the working tree and the index with --staged --worktree.
+git restore --staged --worktree <file>
+# or
+git reset --hard HEAD 
+
+
+
+# If you have happened to stage files using 'git add [fileName]' and you want to untrack them from the stage, you can use the following command:
+git rm -r --cached [fileName]
