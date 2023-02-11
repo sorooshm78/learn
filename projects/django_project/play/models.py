@@ -36,7 +36,7 @@ class RoomGameModel(models.Model):
 
     rooms = RoomManager()
 
-    def is_empty(self):
+    def has_capacity(self):
         if self.user1 is not None and self.user2 is not None:
             return False
         return True
