@@ -9,14 +9,22 @@ class RoomManager(models.Manager):
     def empty_rooms(self):
         return self.active().filter(Q(user1=None) | Q(user2=None))
 
+    def is_user_have_active_room(self, user):
+        return self.active().filter(Q(user1=user) | Q(user2=user)).exists()
+
+    def get_user_active_room(self, user):
+        return self.active().get(Q(user1=user) | Q(user2=user))
+
     def create_room(self, user):
+        if self.is_user_have_active_room(user):
+            return self.get_user_active_room(user)
+
         room = self.empty_rooms().first()
         if not room:
-            room = super().create(user1=user)
-        else:
-            room.user2 = user
-            room.save()
+            return super().create(user1=user)
 
+        room.user2 = user
+        room.save()
         return room
 
 
