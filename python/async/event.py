@@ -57,6 +57,46 @@ asyncio.run(main())
 
 #######################
 
+
+async def read_file(event):
+    print("read file ....", time.strftime("%X"))
+    await asyncio.sleep(5)
+    event.set()
+    print("read file done", time.strftime("%X"))
+
+
+async def write_network(event):
+    print("in nettwork waiting for reading file", time.strftime("%X"))
+    await event.wait()
+    print("network got it!", time.strftime("%X"))
+
+
+async def write_socket(event):
+    print("in socket waiting for reading file", time.strftime("%X"))
+    await event.wait()
+    print("socket got it!", time.strftime("%X"))
+
+
+async def main():
+    event = asyncio.Event()
+    await asyncio.gather(
+        read_file(event),
+        write_network(event),
+        write_socket(event),
+    )
+
+
+asyncio.run(main())
+# read file .... 15:34:52
+# in nettwork waiting for reading file 15:34:52
+# in socket waiting for reading file 15:34:52
+# read file done 15:34:57
+# network got it! 15:34:57
+# socket got it! 15:34:57
+
+
+#######################
+
 import functools
 
 
