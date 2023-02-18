@@ -97,4 +97,5 @@ git branch -D <branch>
 ### Rename the current branch to ＜branch＞.
 ```
 git branch -m <branch>
+git branch -m <old branch name><new branch name>  
 ```
