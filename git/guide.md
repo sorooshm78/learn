@@ -57,3 +57,44 @@ git log --oneline
 ```
 git reset [--soft, --mixed, --hard] <ref>
 ```
+### List all of the branches in your repository. This is synonymous with git branch --list.
+```
+git branch
+```
+
+### Create a new branch called ＜branch＞. This does **not check out the new branch.**
+```
+git branch <branch>
+```
+
+### One can use git switch <branch name> to switch branches.
+```
+git switch <branch name>
+```
+
+### If the destination branch does not exist, you have to append the “-b” option, otherwise you won’t be able to switch to that branch.
+```
+git checkout <existing_branch>
+git checkout -b <new_branch>
+```
+
+### If the destination branch does not exist, you have to specify the “-c” option (for “create branch“), otherwise you will get an error message when switching to that branch.
+```
+git switch <existing_branch>
+git switch -c <non_existing_branch>
+```
+
+### Delete the specified branch. This is a “safe” operation in that Git prevents you from deleting the branch if it has unmerged changes.
+```
+git branch -d <branch>
+```
+
+### Force delete the specified branch, even if it has unmerged changes. This is the command to use if you want to permanently throw away all of the commits associated with a particular line of development.
+```
+git branch -D <branch>
+```
+
+### Rename the current branch to ＜branch＞.
+```
+git branch -m <branch>
+```
