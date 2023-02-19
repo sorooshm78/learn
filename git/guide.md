@@ -97,5 +97,37 @@ git branch -D <branch>
 ### Rename the current branch to ＜branch＞.
 ```
 git branch -m <branch>
-git branch -m <old branch name><new branch name>  
+git branch -m <old branch name> <new branch name>  
 ```
+
+### Git revert creates a new commit with the changes that are rolled back. git reset erases your Git history instead of making a new commit. The steps after are the same as any other commit.
+
+*   **git revert** requires the id of the commit you want to **remove keeping it into your history**
+*   **git reset** requires the commit you want to keep, and will consequentially **remove anything after that from history.**
+
+```
+git revert <insert bad commit hash here>
+```
+
+----------------
+```
+-e
+--edit
+```
+### This is a default option and doesn't need to be specified. This option will open the configured system editor and prompts you to edit the commit message prior to committing the revert
+
+----------------
+
+```
+--no-edit
+```
+### This is the inverse of the -e option. The revert will not open the editor.
+
+----------------
+```
+-n
+--no-commit
+```
+
+### Passing this option will prevent git revert from creating a new commit that inverses the target commit. Instead of creating the new commit this option will add the inverse changes to the Staging Index and Working Directory. These are the other trees Git uses to manage the state of the repository. For more info visit the git reset page.
+----------------
