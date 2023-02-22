@@ -38,7 +38,7 @@ git log --oneline
 ```
 
 ### Git reset
-![reset](./reset.png)
+![reset](./images/reset.png)
 * --soft: **uncommit changes**, changes are left staged (index).
 * --mixed (default): **uncommit + unstage changes**, changes are left in working tree.
 * --hard: uncommit + **unstage + delete changes**, nothing left.
@@ -161,3 +161,7 @@ git merge <branch>
 ### When a conflict occurs, this option can be used to abort the merge and restore the project's state as it was before starting the merge.
 
 ----------------
+![reset](./images/merge-vs-merge-with-squash.png)
+![reset](./images/squahed.png)
+![reset](./images/type_of_merge.png)
+![reset](./images/types-of-merges.jpg)
