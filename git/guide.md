@@ -131,3 +131,33 @@ git revert <insert bad commit hash here>
 
 ### Passing this option will prevent git revert from creating a new commit that inverses the target commit. Instead of creating the new commit this option will add the inverse changes to the Staging Index and Working Directory. These are the other trees Git uses to manage the state of the repository. For more info visit the git reset page.
 ----------------
+
+
+### Git merge
+```
+git merge <branch>
+```
+### Important Options
+----------------
+```
+--no-ff
+```
+### Creates a merge commit even when a fast-forward would be possible.
+
+----------------
+
+```
+--squash
+```
+
+### Combines all integrated changes into a single commit, instead of preserving them as individual commits.
+
+----------------
+
+```
+--abort
+```
+
+### When a conflict occurs, this option can be used to abort the merge and restore the project's state as it was before starting the merge.
+
+----------------
