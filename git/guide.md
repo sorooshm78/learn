@@ -165,3 +165,15 @@ git merge <branch>
 ![reset](./images/squahed.png)
 ![reset](./images/type_of_merge.png)
 ![reset](./images/types-of-merges.jpg)
+
+
+### Git rebase
+
+### [Reset vs Rebase](https://blog.faradars.org/an-introduction-to-git-merge-and-rebase/)
+
+### Rebase is one of two Git utilities that specializes in integrating changes from one branch onto another. The other change integration utility is git merge. Merge is always a forward moving change record. Alternatively, rebase has powerful history rewriting features. For a detailed look at Merge vs. Rebase, visit our Merging vs Rebasing guide. Rebase itself has 2 main modes: "manual" and "interactive" mode. We will cover the different Rebase modes in more detail below.
+
+```
+git rebase <base>
+git rebase --interactive <base>
+```
