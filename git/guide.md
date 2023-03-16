@@ -177,3 +177,15 @@ git merge <branch>
 git rebase <base>
 git rebase --interactive <base>
 ```
+
+### Git checkout
+...
+
+### Git remote
+...
+
+### Git stash
+...
+
+### Git diff
+...
