@@ -210,6 +210,11 @@ git diff --staged ./path/to/file
 or
 git diff --cached ./path/to/file
 ```
+Comparing files from two branches
+To compare a specific file across branches, pass in the path of the file as the third argument to git diff
+```
+git diff main new_branch ./diff_test.txt
+```
 
 ### Git checkout
 ...
