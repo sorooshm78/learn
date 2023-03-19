@@ -178,6 +178,39 @@ git rebase <base>
 git rebase --interactive <base>
 ```
 
+### Git diff
+Git diff lists out the changes between your current 
+working directory and your staging area. (unstage vs stage)
+or 
+By default git diff will show you any uncommitted changes since the last commit.(last commit vs unstage)
+```
+git diff
+```
+Earlier, we ran the git diff command which shows nothing. Because git diff shows the difference between changes in your working directory and staged area. But, we didn't change anything in the working directory after we staged the changes. So, there is nothing different while compared with the staged area. I hope that makes sense
+
+```
+git diff <Old version of file> <New version of file>
+```
+
+Git diff also has a special mode for highlighting changes with much better granularity: ‐‐color-words. This mode tokenizes added and removed lines by whitespace and then diffs those
+```
+git diff <Old version of file> <New version of file> --color-words
+```
+
+Diff between HEAD and unstage
+```
+git diff HEAD ./path/to/file
+or
+git diff ./path/to/file
+```
+
+Diff between HEAD and stage
+```
+git diff --staged ./path/to/file
+or
+git diff --cached ./path/to/file
+```
+
 ### Git checkout
 ...
 
@@ -185,7 +218,4 @@ git rebase --interactive <base>
 ...
 
 ### Git stash
-...
-
-### Git diff
 ...
