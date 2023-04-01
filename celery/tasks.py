@@ -1,4 +1,5 @@
 from celery import Celery
+import time
 
 
 BROKER_URL = "redis://localhost:6379/0"
@@ -28,3 +29,8 @@ def div(self, x, y):
     except ZeroDivisionError:
         print("Error ZeroDivisionError")
         self.retry(countdown=5, max_retries=1)
+
+
+@app.task
+def long_task():
+    time.sleep(10)

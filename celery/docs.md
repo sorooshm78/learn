@@ -141,3 +141,92 @@ celery.exceptions.MaxRetriesExceededError: Can't retry tasks.div[e6d14086-21c3-4
 
 ```
 
+# Monitoring and Management Guide¶
+## Commands
+* shell: Drop into a Python shell.
+
+The locals will include the celery variable: this is the current app. Also all known tasks will be automatically added to locals (unless the --without-tasks flag is set).
+
+Uses Ipython, bpython, or regular python in that order if installed. You can force an implementation using --ipython, --bpython, or --python.
+
+* status: List active nodes in this cluster
+```
+$ celery -A proj status
+```
+* result: Show the result of a task
+```
+$ celery -A proj result -t tasks.add 4e196aa4-0141-4601-8138-7aa33db0f577
+```
+Note that you can omit the name of the task as long as the task doesn’t use a custom result backend.
+
+* purge: Purge messages from all configured task queues.
+This command will remove all messages from queues configured in the CELERY_QUEUES setting:
+```
+$ celery -A proj purge
+```
+* inspect active: List active tasks
+```
+$ celery -A proj inspect active
+```
+These are all the tasks that are currently being executed.
+
+* inspect scheduled: List scheduled ETA tasks
+```
+$ celery -A proj inspect scheduled
+```
+These are tasks reserved by the worker when they have an eta or countdown argument set.
+
+* inspect reserved: List reserved tasks
+```
+$ celery -A proj inspect reserved
+```
+This will list all tasks that have been prefetched by the worker, and is currently waiting to be executed (doesn’t include tasks with an ETA value set).
+
+* inspect revoked: List history of revoked tasks
+```
+$ celery -A proj inspect revoked
+```
+
+* inspect stats: Show worker statistics (see Statistics)
+```
+$ celery -A proj inspect stats
+```
+
+* inspect query_task: Show information about task(s) by id.
+
+Any worker having a task in this set of ids reserved/active will respond with status and information.
+```
+$ celery -A proj inspect query_task e9f6c8f0-fec9-4ae8-a8c6-cf8c8451d4f8
+```
+You can also query for information about multiple tasks:
+
+```
+$ celery -A proj inspect query_task id1 id2 ... idN
+```
+
+# Flower: Real-time Celery web-monitor
+## Usage
+
+You can use pip to install Flower:
+```
+$ pip install flower
+```
+Running the flower command will start a web-server that you can visit:
+```
+$ celery -A proj flower
+```
+The default port is http://localhost:5555, but you can change this using the –port argument:
+```
+$ celery -A proj flower --port=5555
+```
+Broker URL can also be passed through the --broker argument :
+```
+$ celery flower --broker=amqp://guest:guest@localhost:5672//
+or
+$ celery flower --broker=redis://guest:guest@localhost:6379/0
+```
+Then, you can visit flower in your web browser :
+```
+$ open http://localhost:5555
+```
+Flower has many more features than are detailed here, including authorization options. Check out the official documentation for more information.

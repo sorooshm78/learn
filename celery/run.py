@@ -1,4 +1,4 @@
-from tasks import add, add_when_binded, div
+from tasks import add, add_when_binded, div, long_task
 
 
 add.delay(1, 1)
@@ -10,3 +10,5 @@ add_when_binded.delay(5, 5)
 
 div.delay(4, 2)
 div.delay(4, 0)
+
+long_task.delay()
