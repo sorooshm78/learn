@@ -9,10 +9,9 @@ celery -A tasks worker -l INFO
 # Calling Tasks
 The API defines a standard set of execution options, as well as three methods:
   - apply_async(args[, kwargs[, …]])
-      
       Sends a task message.
+  
   - delay(*args, **kwargs)
-      
       Shortcut to send a task message, but doesn’t support execution options.
 
 
@@ -230,3 +229,156 @@ Then, you can visit flower in your web browser :
 $ open http://localhost:5555
 ```
 Flower has many more features than are detailed here, including authorization options. Check out the official documentation for more information.
+
+# Keeping Results
+If you want to keep track of the tasks’ states, Celery needs to store or send the states somewhere. There are several built-in result backends to choose from: SQLAlchemy/Django ORM, MongoDB, Memcached, Redis, RPC (RabbitMQ/AMQP), and – or you can define your own.
+
+Or if you want to use Redis as the result backend, but still use RabbitMQ as the message broker (a popular combination):
+
+```
+app = Celery('tasks', backend='redis://localhost', broker='pyamqp://')
+```
+Now with the result backend configured, close the current python session and import the tasks module again to put the changes into effect. This time you’ll hold on to the AsyncResult instance returned when you call a task:
+```
+>>> from tasks import add    # close and reopen to get updated 'app'
+>>> result = add.delay(4, 4)
+```
+The ready() method returns whether the task has finished processing or not:
+```
+>>> result.ready()
+False
+```
+You can wait for the result to complete, but this is rarely used since it turns the asynchronous call into a synchronous one:
+```
+>>> result.get(timeout=1)
+8
+```
+```
+result.get() 
+# this is block until get result 
+```
+```
+# do work 10 second 
+result.get(timeout=5) 
+# this is block until for timeout=5 and throw exception
+
+raceback (most recent call last):
+  File "/home/sm/src/learn/celery/run.py", line 26, in <module>
+    print(result.get(timeout=5))
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/celery/result.py", line 224, in get
+    return self.backend.wait_for_pending(
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/celery/backends/asynchronous.py", line 221, in wait_for_pending
+    for _ in self._wait_for_pending(result, **kwargs):
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/celery/backends/asynchronous.py", line 293, in _wait_for_pending
+    raise TimeoutError('The operation timed out.')
+celery.exceptions.TimeoutError: The operation timed out.
+
+```
+
+In case the task raised an exception, get() will re-raise the exception, but you can override this by specifying the propagate argument:
+```
+>>> result.get(propagate=False)
+```
+Do task what get exception
+```
+>>> result = do_exception_task.delay()
+>>> result.get() # default result.get(propagate=True) 
+
+# raise exception
+Traceback (most recent call last):
+  File "/home/sm/src/learn/celery/run.py", line 30, in <module>
+    result.get()
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/celery/result.py", line 224, in get
+    return self.backend.wait_for_pending(
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/celery/backends/asynchronous.py", line 223, in wait_for_pending
+    return result.maybe_throw(callback=callback, propagate=propagate)
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/celery/result.py", line 336, in maybe_throw
+    self.throw(value, self._to_remote_traceback(tb))
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/celery/result.py", line 329, in throw
+    self.on_ready.throw(*args, **kwargs)
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/vine/promises.py", line 234, in throw
+    reraise(type(exc), exc, tb)
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/vine/utils.py", line 30, in reraise
+    raise value
+Exception: Exception Error
+
+```
+```
+>>> result = do_exception_task.delay()
+>>> result.get(propagate=False)
+
+Exception Error # print exception error
+```
+
+If the task raised an exception, you can also gain access to the original traceback:
+```
+>>> result.traceback
+```
+```
+>>> result = do_exception_task.delay()
+>>> result.get(propagate=False)
+
+>>> result.traceback
+
+# print exception 
+Traceback (most recent call last):
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/celery/app/trace.py", line 451, in trace_task
+    R = retval = fun(*args, **kwargs)
+  File "/home/sm/src/learn/celery/.venv/lib/python3.10/site-packages/celery/app/trace.py", line 734, in __protected_call__
+    return self.run(*args, **kwargs)
+  File "/home/sm/src/learn/celery/tasks.py", line 44, in do_exception_task
+    raise Exception("Exception Error")
+Exception: Exception Error
+```
+
+failed() : Return True if the task failed.
+```
+>>> result = do_exception_task.delay()
+>>> result.get(propagate=False)
+>>> result.failed()
+
+True
+```
+forget() : Forget the result of this task and its parents.
+```
+>>> r = add.delay(1,1).forget()
+>>> r.get()
+
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+AttributeError: 'NoneType' object has no attribute 'get'
+```
+
+## Built-in States
+PENDING : 
+Task is waiting for execution or unknown. Any task id that’s not known is implied to be in the pending state.
+
+STARTED : 
+Task has been started. Not reported by default, to enable please see app.Task.track_started.
+
+SUCCESS : 
+Task has been successfully executed.
+
+FAILURE : 
+Task execution resulted in failure.
+
+RETRY : 
+Task is being retried.
+
+REVOKED : 
+Task has been revoked.
+
+```
+>>> result = do_exception_task.delay()
+>>> result.get(propagate=False)
+>>> result.status
+
+FAILURE
+```
+```
+>>> result = add.delay(9, 9)
+>>> result.get(propagate=False)
+>>> result.status
+
+SUCCESS
+```

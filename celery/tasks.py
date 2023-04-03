@@ -3,10 +3,13 @@ import time
 
 
 BROKER_URL = "redis://localhost:6379/0"
+BACKEND_URL = "redis://localhost"
+
 
 app = Celery(
     main="tasks",
     broker=BROKER_URL,
+    backend=BACKEND_URL,
 )
 
 
@@ -34,3 +37,8 @@ def div(self, x, y):
 @app.task
 def long_task():
     time.sleep(10)
+
+
+@app.task
+def do_exception_task():
+    raise Exception("Exception Error")
