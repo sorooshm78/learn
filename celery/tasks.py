@@ -18,6 +18,11 @@ def add(x, y):
     return x + y
 
 
+@app.task
+def sub(x, y):
+    return x - y
+
+
 @app.task(bind=True)
 def add_when_binded(self, x, y):
     print(f"self -> {self}")

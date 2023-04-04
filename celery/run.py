@@ -40,3 +40,22 @@ print(result.failed())
 
 result = add.delay(10, 10).forget()
 print(result.get())
+
+task = add.signature((1, 2))
+result = task.delay()
+print(result.get())
+
+task = add.signature((1, 2))
+result = task.apply_async(countdown=3)
+print(result.get())
+
+task = add.signature((1, 2))
+task()  # executable signature task
+
+add.apply_async((10, 10), link=div.signature((2,)))
+# or
+add.apply_async((10, 10), link=div.s(2))
+
+add.apply_async((10, 10), link=div.signature((50, 5), immutable=True))
+# or
+add.apply_async((10, 10), link=div.si(50, 5))

@@ -514,3 +514,111 @@ Exception Error
 ## task_acks_late
 Late ack means the task messages will be acknowledged after the task has been executed, not just before (the default behavior).
 
+
+# Signatures
+You just learned how to call a task using the tasks delay method in the calling guide, and this is often all you need, but **sometimes you may want to pass the signature of a task invocation to another process or as an argument to another function.**
+**A signature() wraps the arguments, keyword arguments, and execution options of a single task invocation in a way such that it can be passed to functions or even serialized and sent across the wire.**
+
+You can create a signature for the add task using its name like this:
+```
+>>> from celery import signature
+>>> signature('tasks.add', args=(2, 2), countdown=10)
+
+tasks.add(2, 2)
+```
+
+or you can create one using the task’s signature method:
+```
+>>> add.signature((2, 2), countdown=10)
+tasks.add(2, 2)
+```
+
+There’s also a shortcut using star arguments:
+```
+>>> add.s(2, 2)
+tasks.add(2, 2)
+```
+Keyword arguments are also supported:
+```
+>>> add.s(2, 2, debug=True)
+tasks.add(2, 2, debug=True)
+```
+
+Calling the signature will execute the task inline in the current process:
+```
+>>> add(2, 2)
+4
+>>> add.s(2, 2)()
+4
+```
+
+## Partials
+
+Specifying additional args, kwargs, or options to apply_async/delay creates partials:
+Any arguments added will be prepended to the args in the signature:
+```
+>>> partial = add.s(2)          # incomplete signature
+>>> partial.delay(4)            # 4 + 2
+>>> partial.apply_async((4,))  # same
+```
+
+Any keyword arguments added will be merged with the kwargs in the signature, with the new keyword arguments taking precedence:
+```
+>>> s = add.s(2, 2)
+>>> s.delay(debug=True)                    # -> add(2, 2, debug=True)
+>>> s.apply_async(kwargs={'debug': True})  # same
+```
+
+Any options added will be merged with the options in the signature, with the new options taking precedence:
+```
+>>> s = add.signature((2, 2), countdown=10)
+>>> s.apply_async(countdown=1)  # 
+```
+
+## Callbacks
+Callbacks can be added to any task using the link argument to apply_async:
+```
+add.apply_async((2, 2), link=other_task.s())
+```
+The callback will only be applied if the task exited successfully, and it will be applied with the return value of the parent task as argument.
+
+As I mentioned earlier, any arguments you add to a signature, will be prepended to the arguments specified by the signature itself!
+
+If you have the signature:
+```
+>>> sig = add.s(10)
+```
+then sig.delay(result) becomes:
+```
+>>> add.apply_async(args=(result, 10))
+```
+…
+
+Now let’s call our add task with a callback using partial arguments:
+```
+>>> add.apply_async((2, 2), link=add.s(8))
+```
+As expected this will first launch one task calculating 2 + 2, then another task calculating 4 + 8.
+
+```
+from tasks import sum
+​
+sum.apply_async((8,8), link=sum.s(10)) # Result of the first task is 16 so the second task will be called with 16 and 10
+```
+
+```
+from tasks import sum, increase_counter
+​
+sum.apply_async((8,8), link=increase_counter.si()) # Calculate 8 + 8 and increase counter of sum task calls
+```
+
+## Immutability
+Partials are meant to be used with callbacks, any tasks linked, or chord callbacks will be applied with the result of the parent task. Sometimes you want to specify a callback that doesn’t take additional arguments, and in that case you can set the signature to be immutable:
+```
+>>> add.apply_async((2, 2), link=reset_buffers.signature(immutable=True))
+```
+The .si() shortcut can also be used to create immutable signatures:
+```
+>>> add.apply_async((2, 2), link=reset_buffers.si())
+```
+Only the execution options can be set when a signature is immutable, so it’s not possible to call the signature with partial args/kwargs.
