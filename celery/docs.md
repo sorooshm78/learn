@@ -382,3 +382,135 @@ FAILURE
 
 SUCCESS
 ```
+
+# Configuration
+Celery, like a consumer appliance, doesn’t need much configuration to operate. It has an input and an output. The input must be connected to a broker, and the output can be optionally connected to a result backend. However, if you look closely at the back, there’s a lid revealing loads of sliders, dials, and buttons: this is the configuration.
+
+The default configuration should be good enough for most use cases, but there are many options that can be configured to make Celery work exactly as needed. Reading about the options available is a good idea to familiarize yourself with what can be configured.
+
+The configuration can be set on the app directly or by using a dedicated configuration module. As an example you can configure the default serializer used for serializing task payloads by changing the task_serializer setting:
+```
+app.conf.task_serializer = 'json'
+```
+If you’re configuring many settings at once you can use update:
+```
+app.conf.update(
+    task_serializer='json',
+    accept_content=['json'],  # Ignore other content
+    result_serializer='json',
+    timezone='Europe/Oslo',
+    enable_utc=True,
+)
+```
+For larger projects, a dedicated configuration module is recommended. Hard coding periodic task intervals and task routing options is discouraged. It is much better to keep these in a centralized location. This is especially true for libraries, as it enables users to control how their tasks behave. A centralized configuration will also allow your SysAdmin to make simple changes in the event of system trouble.
+
+You can tell your Celery instance to use a configuration module by calling the app.config_from_object() method:
+```
+app.config_from_object('celeryconfig')
+```
+This module is often called “celeryconfig”, but you can use any module name.
+
+In the above case, a module named celeryconfig.py must be available to load from the current directory or on the Python path. It could look something like this:
+
+celeryconfig.py:
+```
+broker_url = 'pyamqp://'
+result_backend = 'rpc://'
+
+task_serializer = 'json'
+result_serializer = 'json'
+accept_content = ['json']
+timezone = 'Europe/Oslo'
+enable_utc = True
+
+```
+
+To verify that your configuration file works properly and doesn’t contain any syntax errors, you can try to import it:
+```
+$ python -m celeryconfig
+```
+
+## Global Config
+```
+app.conf.task_ignore_result = True
+
+or 
+
+app.conf.update(
+
+)
+```
+## Locally close return task results:
+```
+@app.task(ignore_result=True)
+def add(...):
+```
+
+## task_time_limit
+Task hard time limit in seconds. The worker processing the task will be **killed** and replaced with a new one when this is exceeded.
+
+## task_soft_time_limit
+Task soft time limit in seconds.
+The **SoftTimeLimitExceeded** exception will be raised when this is exceeded. For example, the task can catch this to clean up before the hard time limit comes:
+
+```
+app.conf.update(
+    task_time_limit=100,
+    task_soft_time_limit=60,
+)
+```
+```
+from celery.exceptions import SoftTimeLimitExceeded
+
+@app.task
+def mytask():
+    try:
+        return do_work()
+    except SoftTimeLimitExceeded:
+        cleanup_in_a_hurry()
+```
+
+## worker_concurrency
+The number of concurrent worker processes/threads/green threads executing tasks.
+
+If you’re doing mostly I/O you can have more processes, but if mostly CPU-bound, try to keep it close to the number of CPUs on your machine. If not set, the number of CPUs/cores on the host will be used.
+
+## worker_prefetch_multiplier
+Default: 4.
+How many messages to prefetch at a time multiplied by the number of concurrent processes. The default is 4 (four messages for each process). The default setting is usually a good choice, however – if you have very long running tasks waiting in the queue and you have to start the workers, note that the first worker to start will receive four times the number of messages initially. Thus the tasks may not be fairly distributed to the workers.
+To disable prefetching, set worker_prefetch_multiplier to 1. Changing that setting to 0 will allow the worker to keep consuming as many messages as it wants.
+
+## task_ignore_result
+Whether to store the task return values or not (tombstones). If you still want to store errors, just not successful return values, you can set task_store_errors_even_if_ignored.
+
+```
+>>> app.conf.update(
+  task_ignore_result=True,
+)
+
+>>> result = add.delay(1, 1)
+>>> print(result.get())
+
+None
+```
+
+## task_store_errors_even_if_ignored
+If set, the worker stores all task errors in the result store even if Task.ignore_result is on.
+
+```
+>>> app.conf.update(
+  task_store_errors_even_if_ignored=True,
+)
+
+>>> result = add.delay(1, 1)
+>>> print(result.get())
+None
+
+>>> result = do_exception_task.delay()
+>>> print(result.get(propagate=False))
+Exception Error
+```
+
+## task_acks_late
+Late ack means the task messages will be acknowledged after the task has been executed, not just before (the default behavior).
+
