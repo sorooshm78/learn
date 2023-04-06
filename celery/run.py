@@ -78,5 +78,7 @@ from celery import chain, group, chord
 # res = chord(group(tasks.add.s(5, 5), tasks.sub.s(25, 10)))(tasks.tsum.s())
 # print(res.get())
 
-res = chord([tasks.add.s(5, 5), tasks.sub.s(25, 10)])(tasks.tsum.s())
-print(res.get())
+# res = chord([tasks.add.s(5, 5), tasks.sub.s(25, 10)])(tasks.tsum.s())
+# print(res.get())
+
+# print(tasks.do_signal_task.delay().get())

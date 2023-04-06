@@ -1,4 +1,4 @@
-from celery import Celery
+from celery import Celery, signals
 import time
 
 
@@ -52,3 +52,31 @@ def long_task():
 @app.task
 def do_exception_task():
     raise Exception("Exception Error")
+
+
+@app.task
+def do_signal_task():
+    return "work..."
+
+
+# ------------------ Signals ------------------
+
+
+@signals.before_task_publish.connect(sender="tasks.do_signal_task")
+def print_before_task_publish(sender=None, **kwargs):
+    print("befor task published")
+
+
+@signals.after_task_publish.connect(sender="tasks.do_signal_task")
+def print_after_task_publish(sender=None, **kwargs):
+    print("after task published")
+
+
+@signals.task_prerun.connect(sender=do_signal_task)
+def print_task_prerun(sender=None, **kwargs):
+    print("befor task run")
+
+
+@signals.task_postrun.connect(sender=do_signal_task)
+def print_task_postrun(sender=None, **kwargs):
+    print("after task run")

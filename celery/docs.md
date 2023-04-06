@@ -764,3 +764,99 @@ If you don’t want to forward arguments to the group then you can make the sign
 # [10, 15] -> tsum([10, 15]) -> 25
 25
 ```
+
+# Signals
+
+* before_task_publish : 
+
+Dispatched before a task is published. Note that this is executed in the process sending the task.
+
+* after_task_publish
+
+Dispatched when a task has been sent to the broker. Note that this is executed in the process that sent the task
+
+```
+@app.task
+def do_signal_task():
+    time.sleep(5)
+    return "work..."
+
+
+@signals.before_task_publish.connect(sender="tasks.do_signal_task")
+def print_before_task_publish(sender=None, **kwargs):
+    print("befor task published")
+
+
+@signals.after_task_publish.connect(sender="tasks.do_signal_task")
+def print_after_task_publish(sender=None, **kwargs):
+    print("after task published")
+
+
+>>> do_signal_task.delay()
+
+befor task published
+after task published
+work...
+```
+
+
+
+* task_prerun
+
+Dispatched before a task is executed.
+
+* task_postrun
+
+Dispatched after a task has been executed.
+
+```
+@signals.task_prerun.connect(sender=do_signal_task)
+def print_task_prerun(sender=None, **kwargs):
+    print("befor task run")
+
+
+@signals.task_postrun.connect(sender=do_signal_task)
+def print_task_postrun(sender=None, **kwargs):
+    print("after task run")
+
+
+>>> tasks.do_signal_task.delay().get()
+
+[: WARNING/ForkPoolWorker-4] befor task run
+[: INFO/ForkPoolWorker-4] Task tasks.do_signal_task[96e54373-ebd9-44fc-bf97-47493dfbecd0] succeeded in 0 003380734999154811s: 'work...'
+[: WARNING/ForkPoolWorker-4] after task run
+
+```
+
+
+* task_retry
+
+Dispatched when a task will be retried
+
+* task_success
+
+Dispatched when a task succeeds.
+
+* task_failure
+
+Dispatched when a task fails.
+ 
+* task_internal_error
+
+Dispatched when an internal Celery error occurs while executing the task.
+
+* task_received
+
+Dispatched when a task is received from the broker and is ready for execution.
+
+* task_revoked
+
+Dispatched when a task is revoked/terminated by the worker.
+
+* task_unknown
+
+Dispatched when a worker receives a message for a task that’s not registered.
+
+* task_rejected
+
+Dispatched when a worker receives an unknown type of message to one of its task queues.
