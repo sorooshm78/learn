@@ -622,3 +622,145 @@ The .si() shortcut can also be used to create immutable signatures:
 >>> add.apply_async((2, 2), link=reset_buffers.si())
 ```
 Only the execution options can be set when a signature is immutable, so it’s not possible to call the signature with partial args/kwargs.
+
+# The Primitives
+Overview
+* group : The group primitive is a signature that takes a list of tasks that should be applied in parallel.
+
+* chain : The chain primitive lets us link together signatures so that one is called after the other, essentially forming a chain of callbacks.
+
+* chord : A chord is just like a group but with a callback. A chord consists of a header group and a body, where the body is a task that should execute after all of the tasks in the header are complete.
+
+## Simple chain
+Here’s a simple chain, the first task executes passing its return value to the next task in the chain, and so on.
+```
+>>> from celery import chain
+
+>>> # 2 + 2 + 4 + 8
+>>> res = chain(add.s(2, 2), add.s(4), add.s(8))()
+>>> res.get()
+16
+```
+This can also be written using pipes:
+```
+>>> (add.s(2, 2) | add.s(4) | add.s(8))().get()
+16
+```
+
+## Immutable signatures
+Signatures can be partial so arguments can be added to the existing arguments, but you may not always want that, for example if you don’t want the result of the previous task in a chain.
+
+In that case you can mark the signature as immutable, so that the arguments cannot be changed:
+```
+>>> add.signature((2, 2), immutable=True)
+```
+There’s also a .si() shortcut for this, and this is the preferred way of creating signatures:
+```
+>>> add.si(2, 2)
+```
+Now you can create a chain of independent tasks instead:
+```
+>>> res = (add.si(2, 2) | add.si(4, 4) | add.si(8, 8))()
+>>> res.get()
+16
+
+>>> res.parent.get()
+8
+
+>>> res.parent.parent.get()
+4
+```
+
+## Simple group
+You can easily create a group of tasks to execute in parallel:
+```
+>>> from celery import group
+>>> res = group(add.s(i, i) for i in range(10))()
+>>> res.get(timeout=1)
+[0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+```
+
+## Simple chord
+
+The chord primitive enables us to add a callback to be called when all of the tasks in a group have finished executing. This is often required for algorithms that aren’t embarrassingly parallel:
+```
+>>> from celery import chord
+>>> res = chord((add.s(i, i) for i in range(10)), xsum.s())()
+>>> res.get()
+90
+```
+The above example creates 10 task that all start in parallel, and when all of them are complete the return values are combined into a list and sent to the xsum task.
+
+The body of a chord can also be immutable, so that the return value of the group isn’t passed on to the callback:
+```
+>>> chord((import_contact.s(c) for c in contacts),
+...       notify_complete.si(import_id)).apply_async()
+```
+Note the use of .si above; this creates an immutable signature, meaning any new arguments passed (including to return value of the previous task) will be ignored.
+
+Blow your mind by combining
+
+Chains can be partial too:
+```
+>>> c1 = (add.s(4) | mul.s(8))
+
+# (16 + 4) * 8
+>>> res = c1(16)
+>>> res.get()
+160
+```
+this means that you can combine chains:
+```
+# ((4 + 16) * 2 + 4) * 8
+>>> c2 = (add.s(4, 16) | mul.s(2) | (add.s(4) | mul.s(8)))
+
+>>> res = c2()
+>>> res.get()
+352
+```
+Chaining a group together with another task will automatically upgrade it to be a chord:
+```
+>>> c3 = (group(add.s(i, i) for i in range(10)) | xsum.s())
+>>> res = c3()
+>>> res.get()
+90
+```
+Groups and chords accepts partial arguments too, so in a chain the return value of the previous task is forwarded to all tasks in the group:
+```
+>>> new_user_workflow = (create_user.s() | group(
+...                      import_contacts.s(),
+...                      send_welcome_email.s()))
+... new_user_workflow.delay(username='artv',
+...                         first='Art',
+...                         last='Vandelay',
+...                         email='art@vandelay.com')
+```
+If you don’t want to forward arguments to the group then you can make the signatures in the group immutable:
+```
+>>> res = (add.s(4, 4) | group(add.si(i, i) for i in range(10)))()
+>>> res.get()
+<GroupResult: de44df8c-821d-4c84-9a6a-44769c738f98 [
+    bc01831b-9486-4e51-b046-480d7c9b78de,
+    2650a1b8-32bf-4771-a645-b0a35dcc791b,
+    dcbee2a5-e92d-4b03-b6eb-7aec60fd30cf,
+    59f92e0a-23ea-41ce-9fad-8645a0e7759c,
+    26e1e707-eccf-4bf4-bbd8-1e1729c3cce3,
+    2d10a5f4-37f0-41b2-96ac-a973b1df024d,
+    e13d3bdb-7ae3-4101-81a4-6f17ee21df2d,
+    104b2be0-7b75-44eb-ac8e-f9220bdfa140,
+    c5c551a5-0386-4973-aa37-b65cbeb2624b,
+    83f72d71-4b71-428e-b604-6f16599a9f37]>
+
+>>> res.parent.get()
+8
+```
+```
+>>> res = chord(group(tasks.add.s(5, 5), tasks.sub.s(25, 10)))(tasks.tsum.s())
+# or
+>>> res = chord([tasks.add.s(5, 5), tasks.sub.s(25, 10)])(tasks.tsum.s())
+
+>>> print(res.get())
+
+# [10, 15] -> tsum([10, 15]) -> 25
+25
+```

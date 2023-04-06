@@ -19,6 +19,11 @@ def add(x, y):
 
 
 @app.task
+def tsum(numbers):
+    return sum(numbers)
+
+
+@app.task
 def sub(x, y):
     return x - y
 
