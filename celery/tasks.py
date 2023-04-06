@@ -1,4 +1,5 @@
 from celery import Celery, signals
+from celery.schedules import crontab
 import time
 
 
@@ -59,6 +60,11 @@ def do_signal_task():
     return "work..."
 
 
+@app.task
+def do_schedules_task():
+    print("say hellow...")
+
+
 # ------------------ Signals ------------------
 
 
@@ -80,3 +86,14 @@ def print_task_prerun(sender=None, **kwargs):
 @signals.task_postrun.connect(sender=do_signal_task)
 def print_task_postrun(sender=None, **kwargs):
     print("after task run")
+
+
+# ------------------ Schedules Tasks ------------------
+
+app.conf.beat_schedule = {
+    "print_hellow_every_minute": {
+        "task": "tasks.do_schedules_task",
+        "schedule": crontab(),
+    },
+}
+app.conf.timezone = "Asia/Tehran"
