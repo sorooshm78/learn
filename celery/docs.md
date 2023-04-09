@@ -962,3 +962,167 @@ Beat needs to store the last run times of the tasks in a local database file (na
 ```
 $ celery -A proj beat -s /home/celery/var/run/celerybeat-schedule
 ```
+
+# Routing Tasks
+Automatic routing
+
+The simplest way to do routing is to use the task_create_missing_queues setting (on by default).
+
+With this setting on, a named queue that’s not already defined in task_queues will be created automatically. This makes it easy to perform simple routing tasks.
+
+Say you have two servers, x, and y that handle regular tasks, and one server z, that only handles feed related tasks. You can use this configuration:
+```
+task_routes = {'feed.tasks.import_feed': {'queue': 'feeds'}}
+```
+With this route enabled import feed tasks will be routed to the “feeds” queue, while all other tasks will be routed to the default queue (named “celery” for historical reasons).
+
+Alternatively, you can use glob pattern matching, or even regular expressions, to match all tasks in the feed.tasks name-space:
+```
+app.conf.task_routes = {'feed.tasks.*': {'queue': 'feeds'}}
+```
+If the order of matching patterns is important you should specify the router in items format instead:
+```
+task_routes = ([
+    ('feed.tasks.*', {'queue': 'feeds'}),
+    ('web.tasks.*', {'queue': 'web'}),
+    (re.compile(r'(video|image)\.tasks\..*'), {'queue': 'media'}),
+],)
+```
+
+After installing the router, you can start server z to only process the feeds queue like this:
+```
+user@z:/$ celery -A proj worker -Q feeds
+```
+You can specify as many queues as you want, so you can make this server process the default queue as well:
+```
+user@z:/$ celery -A proj worker -Q feeds,celery
+```
+Changing the name of the default queue
+
+You can change the name of the default queue by using the following configuration:
+```
+app.conf.task_default_queue = 'default'
+```
+How the queues are defined
+
+The point with this feature is to hide the complex AMQP protocol for users with only basic needs. However – you may still be interested in how these queues are declared.
+
+A queue named “video” will be created with the following settings:
+```
+{'exchange': 'video',
+ 'exchange_type': 'direct',
+ 'routing_key': 'video'}
+```
+The non-AMQP backends like Redis or SQS don’t support exchanges, so they require the exchange to have the same name as the queue. Using this design ensures it will work for them as well.
+
+```
+app.conf.update(
+    task_default_queue="default_queue",
+    task_routes={
+        "tasks.add": {"queue": "math"},
+        "tasks.long_task": {"queue": "long"},
+    },
+)
+
+@app.task
+def add(x, y):
+    return x + y
+
+@app.task
+def long_task():
+    time.sleep(10)
+
+
+# celery -A proj worker -Q math,long
+```
+
+## Manual routing
+
+Say you have two servers, x, and y that handle regular tasks, and one server z, that only handles feed related tasks, you can use this configuration:
+```
+from kombu import Queue
+
+app.conf.task_default_queue = 'default'
+app.conf.task_queues = (
+    Queue('default',    routing_key='task.#'),
+    Queue('feed_tasks', routing_key='feed.#'),
+)
+app.conf.task_default_exchange = 'tasks'
+app.conf.task_default_exchange_type = 'topic'
+app.conf.task_default_routing_key = 'task.default'
+```
+task_queues is a list of Queue instances. If you don’t set the exchange or exchange type values for a key, these will be taken from the task_default_exchange and task_default_exchange_type settings.
+
+To route a task to the feed_tasks queue, you can add an entry in the task_routes setting:
+```
+task_routes = {
+        'feeds.tasks.import_feed': {
+            'queue': 'feed_tasks',
+            'routing_key': 'feed.import',
+        },
+}
+```
+You can also override this using the routing_key argument to Task.apply_async(), or send_task():
+```
+from feeds.tasks import import_feed
+
+import_feed.apply_async(args=['http://cnn.com/rss'],
+
+                        queue='feed_tasks',
+
+                        routing_key='feed.import')
+```
+To make server z consume from the feed queue exclusively you can start it with the celery worker -Q option:
+```
+user@z:/$ celery -A proj worker -Q feed_tasks --hostname=z@%h
+```
+Servers x and y must be configured to consume from the default queue:
+```
+user@x:/$ celery -A proj worker -Q default --hostname=x@%h
+user@y:/$ celery -A proj worker -Q default --hostname=y@%h
+```
+If you want, you can even have your feed processing worker handle regular tasks as well, maybe in times when there’s a lot of work to do:
+```
+user@z:/$ celery -A proj worker -Q feed_tasks,default --hostname=z@%h
+```
+If you have another queue but on another exchange you want to add, just specify a custom exchange and exchange type:
+```
+from kombu import Exchange, Queue
+
+app.conf.task_queues = (
+    Queue('feed_tasks',    routing_key='feed.#'),
+    Queue('regular_tasks', routing_key='task.#'),
+    Queue('image_tasks',   exchange=Exchange('mediatasks', type='direct'),
+                           routing_key='image.compress'),
+)
+```
+If you’re confused about these terms, you should read up on AMQP.
+
+```
+# ------------- Celery Config -------------
+from kombu import Queue, Exchange
+
+
+default_exchange = Exchange("default", type="direct")
+work_exchange = Exchange("work", type="direct")
+
+task_queues = {
+    Queue(name="default", exchange=default_exchange, routing_key="default"),
+    Queue(name="math", exchange=work_exchange, routing_key="math"),
+    Queue(name="long", exchange=work_exchange, routing_key="long"),
+}
+
+task_default_queue = "default"
+task_default_exchange = "default"
+task_default_routing_key = "default"
+
+
+task_routes = {
+    "tasks.add": {"queue": "math"},
+    "tasks.long_task": {"queue": "long"},
+}
+
+# ------------- Consol -------------
+>>> tasks.simple_task.apply_async(args=(10,10), queue="math")
+```
+

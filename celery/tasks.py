@@ -13,6 +13,16 @@ app = Celery(
     backend=BACKEND_URL,
 )
 
+# app.conf.update(
+#     task_default_queue="default_queue",
+#     task_routes={
+#         "tasks.add": {"queue": "math"},
+#         "tasks.long_task": {"queue": "long"},
+#     },
+# )
+
+# app.config_from_object("celery_conf")
+
 
 @app.task
 def add(x, y):
