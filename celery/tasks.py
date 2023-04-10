@@ -14,6 +14,13 @@ app = Celery(
 )
 
 # app.conf.update(
+#     event_serializer="pickle",
+#     task_serializer="pickle",
+#     result_serializer="pickle",
+#     accept_content=["application/json", "application/x-python-serialize"],
+# )
+
+# app.conf.update(
 #     task_default_queue="default_queue",
 #     task_routes={
 #         "tasks.add": {"queue": "math"},
@@ -73,6 +80,11 @@ def do_signal_task():
 @app.task
 def do_schedules_task():
     print("say hellow...")
+
+
+@app.task
+def call_print_method(obj):
+    return obj.print()
 
 
 # ------------------ Signals ------------------

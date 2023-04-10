@@ -1126,3 +1126,49 @@ task_routes = {
 >>> tasks.simple_task.apply_async(args=(10,10), queue="math")
 ```
 
+# Concurrency with Eventlet
+Introduction
+
+The Eventlet homepage describes it as a concurrent networking library for Python that allows you to change how you run your code, not how you write it.
+
+It uses epoll(4) or libevent for highly scalable non-blocking I/O.
+
+Coroutines ensure that the developer uses a blocking style of programming that’s similar to threading, but provide the benefits of non-blocking I/O.
+
+The event dispatch is implicit: meaning you can easily use Eventlet from the Python interpreter, or as a small part of a larger application.
+
+Celery supports Eventlet as an alternative execution pool implementation and in some cases superior to prefork. However, you need to ensure one task doesn’t block the event loop too long. Generally, CPU-bound operations don’t go well with Eventlet. Also note that some libraries, usually with C extensions, cannot be monkeypatched and therefore cannot benefit from using Eventlet. Please refer to their documentation if you are not sure. For example, pylibmc does not allow cooperation with Eventlet but psycopg2 does when both of them are libraries with C extensions.
+
+The prefork pool can take use of multiple processes, but how many is often limited to a few processes per CPU. With Eventlet you can efficiently spawn hundreds, or thousands of green threads. In an informal test with a feed hub system the Eventlet pool could fetch and process hundreds of feeds every second, while the prefork pool spent 14 seconds processing 100 feeds. Note that this is one of the applications async I/O is especially good at (asynchronous HTTP requests). You may want a mix of both Eventlet and prefork workers, and route tasks according to compatibility or what works best.
+Enabling Eventlet
+
+You can enable the Eventlet pool by using the celery worker -P worker option.
+```
+$ celery -A proj worker -P eventlet -c 1000
+```
+
+execution pool
+prefork -> cpu-bound
+solo -> on work (whole cpu)
+eventlet -> IO-bound
+
+# Serializers
+
+Data transferred between clients and workers needs to be serialized, so every message in Celery has a content_type header that describes the serialization method used to encode it.
+
+The default serializer is JSON, but you can change this using the task_serializer setting, or for each individual task, or even per message.
+
+There’s built-in support for JSON, pickle, YAML and msgpack, and you can also add your own custom serializers by registering them into the Kombu serializer registry
+
+## json 
+– JSON is supported in many programming languages, is now a standard part of Python (since 2.6), and is fairly fast to decode using the modern Python libraries, such as simplejson.
+
+The primary disadvantage to JSON is that it limits you to the following data types: strings, Unicode, floats, Boolean, dictionaries, and lists. Decimals and dates are notably missing.
+
+Binary data will be transferred using Base64 encoding, increasing the size of the transferred data by 34% compared to an encoding format where native binary types are supported.
+
+However, if your data fits inside the above constraints and you need cross-language support, the default setting of JSON is probably your best choice.
+
+## pickle 
+– If you have no desire to support any language other than Python, then using the pickle encoding will gain you the support of all built-in Python data types (except class instances), smaller messages when sending binary files, and a slight speedup over JSON processing.
+

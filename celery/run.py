@@ -82,3 +82,16 @@ from celery import chain, group, chord
 # print(res.get())
 
 # print(tasks.do_signal_task.delay().get())
+
+# class Person:
+#     def __init__(self, name, age):
+#         self.name = name
+#         self.age = age
+
+#     def print(self):
+#         return f"{self.name} is {self.age}"
+
+
+# p = Person("name", "age")
+# res = tasks.call_print_method.delay(p)
+# print(res.get())
