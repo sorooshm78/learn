@@ -1,6 +1,6 @@
 from multi_table.models import Location, Restaurant
 
-
+# it will create a one to one field model relationship for Restaurant table from Location table.
 # tables create:
 #    - Location
 #    - Restaurant
