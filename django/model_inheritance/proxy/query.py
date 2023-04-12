@@ -37,7 +37,7 @@ MyBook.objects.create(title="b3", price=500)
 
 # ----------------------------------------
 
-# book proxy
+# proxy book
 MyBook.objects.all()
 # <QuerySet [<MyBook: b3 - 500>, <MyBook: b1 - 1000>, <MyBook: b2 - 2000>]>
 
