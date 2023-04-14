@@ -77,16 +77,16 @@ sample_obj = Sample("p_arg_1", "p_arg_2", z="k_arg")
 # args:  ('p_arg_1', 'p_arg_2')
 # kwargs:  {'z': 'k_arg'}
 
-------->>> Sample __new__
-cls:  <class '__main__.Sample'>
-args:  ('p_arg_1', 'p_arg_2')
-kwargs:  {'z': 'k_arg'}
+# ------->>> Sample __new__
+# cls:  <class '__main__.Sample'>
+# args:  ('p_arg_1', 'p_arg_2')
+# kwargs:  {'z': 'k_arg'}
 
-------->>> Sample __init__
-self:  <__main__.Sample object at 0x7f578772f3d0>
-x:  p_arg_1
-y:  p_arg_2
-z:  k_arg
+# ------->>> Sample __init__
+# self:  <__main__.Sample object at 0x7f578772f3d0>
+# x:  p_arg_1
+# y:  p_arg_2
+# z:  k_arg
 
 # --------------------------------------------------
 
