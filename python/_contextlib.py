@@ -1,4 +1,5 @@
-from contextlib import ContextDecorator, contextmanager
+from contextlib import ContextDecorator, contextmanager, closing, suppress
+
 
 @contextmanager
 def example():
@@ -15,6 +16,7 @@ with example():
 # ending ...
 
 # --------------------------------
+
 
 class Network:
     def send(self):
@@ -88,3 +90,54 @@ with MyContextManager() as m:
 # enter ...
 # MyContextManager
 # exit ...
+
+# --------------------------------
+
+
+class MyContextManager:
+    def __enter__(self):
+        print("enter ...")
+
+    def __exit__(self, exc_type, value, traceback):
+        if exc_type == ZeroDivisionError:
+            print("handle ZeroDivisionError exception")
+        print("exit ...")
+        return True
+
+
+with MyContextManager() as m:
+    num = 10 / 0
+
+# enter ...
+# handle ZeroDivisionError exception
+# exit ...
+
+# --------------------------------
+
+
+class MyContextManager:
+    def __enter__(self):
+        print("enter ...")
+
+    def __exit__(self, exc_type, value, traceback):
+        print("exit ...")
+
+    def close(self):
+        print("closing ...")
+
+
+with closing(MyContextManager()) as m:
+    print("do work")
+
+# do work
+# closing ...
+
+# --------------------------------
+
+with suppress(ZeroDivisionError):
+    print("before exception")
+    num = 100 / 0
+    print("after exection")
+
+# before exception
+# Hint : not exection raised
