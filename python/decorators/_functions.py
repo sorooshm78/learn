@@ -191,7 +191,7 @@ def printer(msg):
     print(msg)
 
 
-printer("Hello") # star(percent(printer("Hello")))
+printer("Hello")  # star(percent(printer("Hello")))
 # ***************
 # %%%%%%%%%%%%%%%
 # Hello
