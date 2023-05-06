@@ -85,5 +85,25 @@ if __name__ == "__main__":
 # after 2 at 2023-05-06 15:51:45.894584
 # after 3 at 2023-05-06 15:51:46.894797
 
+# -----------------------------------------
+
+# The keyword await passes function control back to the event loop.
+# (It suspends the execution of the surrounding coroutine.)
+# If Python encounters an await f() expression in the scope of g(),
+# this is how await tells the event loop, “Suspend execution of g()
+# until whatever I’m waiting on—the result of f()—is returned. In the meantime, go let something else run.”
+
+async def g():
+    # Pause here and come back to g() when f() is ready
+    r = await f()
+    return r
+
+# Finally, when you use await f(), it’s required that f() be an object that is awaitable.
+# Well, that’s not very helpful, is it? For now, just know that an awaitable
+# object is either (1) another coroutine or (2) an object defining an .__await__() dunder method that returns an iterator.
+# If you’re writing a program, for the large majority of purposes, you should only need to worry about case #1.
+
+# An awaitable object generally implements an __await__() method.
+# Coroutine objects returned from async def functions are awaitable.
 
 # -----------------------------------------
