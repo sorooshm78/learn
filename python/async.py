@@ -93,10 +93,12 @@ if __name__ == "__main__":
 # this is how await tells the event loop, “Suspend execution of g()
 # until whatever I’m waiting on—the result of f()—is returned. In the meantime, go let something else run.”
 
+
 async def g():
     # Pause here and come back to g() when f() is ready
     r = await f()
     return r
+
 
 # Finally, when you use await f(), it’s required that f() be an object that is awaitable.
 # Well, that’s not very helpful, is it? For now, just know that an awaitable
@@ -105,5 +107,28 @@ async def g():
 
 # An awaitable object generally implements an __await__() method.
 # Coroutine objects returned from async def functions are awaitable.
+
+# -----------------------------------------
+
+# Asyncio is also used for managing the async event loop. An event loop is an object that runs async functions and callbacks. When we want to execute the coroutines, the event will be crucial for the asynchronous functions when we run the asyncio.run() method; the event loop object is created automatically. To implement the more advanced server, we will need lower-level access to the event loop. We need to work directly with the event loop's internals.
+
+# The event loop comes with the following features.
+
+#     It can register, execute, and cancel delayed calls (asynchronous functions)
+#     It can create client and server transports for communication
+#     It can create subprocesses and transports for communication with another program.
+#     Delegate function calls to a pool of threads.
+
+
+import asyncio
+
+
+async def speech_async():
+    print("This is a asynchronicity!")
+
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(speech_async())
+loop.close()
 
 # -----------------------------------------
