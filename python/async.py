@@ -28,3 +28,62 @@
 
 # Synchronous version: Judit plays one game at a time, never two at the same time, until the game is complete. Each game takes (55 + 5) * 30 == 1800 seconds, or 30 minutes. The entire exhibition takes 24 * 30 == 720 minutes, or 12 hours.
 # Asynchronous version: Judit moves from table to table, making one move at each table. She leaves the table and lets the opponent make their next move during the wait time. One move on all 24 games takes Judit 24 * 5 == 120 seconds, or 2 minutes. The entire exhibition is now cut down to 120 * 30 == 3600 seconds, or just 1 hour. (Source)
+
+# -----------------------------------------
+
+import asyncio
+import time
+
+
+async def count():
+    print("One")
+    await asyncio.sleep(1)
+    print("Two")
+
+
+async def main():
+    await asyncio.gather(count(), count(), count())
+
+
+if __name__ == "__main__":
+    start = time.time()
+    asyncio.run(main())
+    end = time.time()
+    print(f"{end-start} second")
+
+# One
+# One
+# One
+# Two
+# Two
+# Two
+# 1.0022783279418945 second
+
+# -----------------------------------------
+
+import asyncio
+from datetime import datetime
+
+
+async def count(time_sleep):
+    print(f"before {time_sleep} at {datetime.now()}")
+    await asyncio.sleep(time_sleep)
+    print(f"after {time_sleep} at {datetime.now()}")
+
+
+async def main():
+    await asyncio.gather(count(1), count(2), count(3))
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+# before 1 at 2023-05-06 15:51:43.893020
+# before 2 at 2023-05-06 15:51:43.893083
+# before 3 at 2023-05-06 15:51:43.893115
+# after 1 at 2023-05-06 15:51:44.894321
+# after 2 at 2023-05-06 15:51:45.894584
+# after 3 at 2023-05-06 15:51:46.894797
+
+
+# -----------------------------------------
