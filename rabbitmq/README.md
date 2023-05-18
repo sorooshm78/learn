@@ -1,4 +1,4 @@
-# Install 
+# Installation 
 ## Install Erlang
 ```
 sudo apt install erlang
@@ -35,7 +35,7 @@ Message queueing allows web servers to respond to requests quickly instead of be
 
 The consumer takes a message off the queue and starts processing the PDF. At the same time, the producer is queueing up new messages. The consumer can be on a totally different server than the producer or they can be located on the same server. The request can be created in one programming language and handled in another programming language. The point is, the two applications will only communicate through the messages they are sending to each other, which means the sender and receiver have low coupling. 
 
-![3](images/3.png)
+![3](images/3_new.png)
 
 1. The user sends a PDF creation request to the web application.
 2. The web application (the producer) sends a message to RabbitMQ that includes data from the request such as name and email.
