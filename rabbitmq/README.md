@@ -238,3 +238,37 @@ The consumer will print the message:
 Hurray! We were able to send our first message through RabbitMQ. As you might have noticed, the receive.py program doesn't exit. It will stay ready to receive further messages, and may be interrupted with Ctrl-C.
 
 Try to run send.py again in a new terminal.
+
+# Rabbitmq-plugins
+
+This command lists all plugins:
+```
+rabbitmq-plugins list
+```
+
+This command lists all plugins whose name contains "management".
+```
+rabbitmq-plugins list -v
+```
+
+This command lists all implicitly or explicitly enabled RabbitMQ plugins. 
+```
+rabbitmq-plugins list -v management
+```
+
+For example, this command enables the "shovel" and "management" plugins and all their dependencies:
+```
+rabbitmq-plugins enable rabbitmq_shovel rabbitmq_management
+```
+
+For example, this command disables "rabbitmq_management" and all plugins that depend on it:
+```
+rabbitmq-plugins disable rabbitmq_management
+```
+
+## Usage
+### Management UI Access
+
+The management UI can be accessed using a Web browser at http://{node-hostname}:15672/.
+
+For example, for a node running on a machine with the hostname of warp10.local, it can be accessed by users with sufficient privileges at either http://warp10.local:15672/ or http://localhost:15672/ (provided that localhost resolves correctly).
