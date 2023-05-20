@@ -312,3 +312,177 @@ This command instructs the RabbitMQ broker to remove any tags from the user name
 rabbitmqctl set_user_tags janeway
 ```
 
+
+# Work Queues
+
+In this one we'll create a Work Queue that will be used to distribute time-consuming tasks among multiple workers.
+
+The main idea behind Work Queues (aka: Task Queues) is to avoid doing a resource-intensive task immediately and having to wait for it to complete. Instead we schedule the task to be done later. We encapsulate a task as a message and send it to the queue. A worker process running in the background will pop the tasks and eventually execute the job. When you run many workers the tasks will be shared between them.
+
+This concept is especially useful in web applications where it's impossible to handle a complex task during a short HTTP request window.
+
+In the previous part of this tutorial we sent a message containing "Hello World!". Now we'll be sending strings that stand for complex tasks. We don't have a real-world task, like images to be resized or pdf files to be rendered, so let's fake it by just pretending we're busy - by using the time.sleep() function. We'll take the number of dots in the string as its complexity; every dot will account for one second of "work". For example, a fake task described by Hello... will take three seconds.
+
+We will slightly modify the send.py code from our previous example, to allow arbitrary messages to be sent from the command line. This program will schedule tasks to our work queue, so let's name it new_task.py:
+
+```
+import sys
+
+message = ' '.join(sys.argv[1:]) or "Hello World!"
+channel.basic_publish(exchange='',
+                      routing_key='hello',
+                      body=message)
+print(" [x] Sent %r" % message)
+```
+
+Our old receive.py script also requires some changes: it needs to fake a second of work for every dot in the message body. It will pop messages from the queue and perform the task, so let's call it worker.py:
+
+```
+import time
+
+def callback(ch, method, properties, body):
+    print(" [x] Received %r" % body.decode())
+    time.sleep(body.count(b'.'))
+    print(" [x] Done")
+```
+
+## Round-robin dispatching
+
+One of the advantages of using a Task Queue is the ability to easily parallelise work. If we are building up a backlog of work, we can just add more workers and that way, scale easily.
+
+First, let's try to run two worker.py scripts at the same time. They will both get messages from the queue, but how exactly? Let's see.
+
+You need three consoles open. Two will run the worker.py script. These consoles will be our two consumers - C1 and C2.
+
+```
+# shell 1
+python worker.py
+# => [*] Waiting for messages. To exit press CTRL+C
+```
+
+```
+# shell 2
+python worker.py
+# => [*] Waiting for messages. To exit press CTRL+C
+```
+
+In the third one we'll publish new tasks. Once you've started the consumers you can publish a few messages:
+
+```
+# shell 3
+python new_task.py First message.
+python new_task.py Second message..
+python new_task.py Third message...
+python new_task.py Fourth message....
+python new_task.py Fifth message.....
+```
+
+Let's see what is delivered to our workers:
+
+```
+# shell 1
+python worker.py
+# => [*] Waiting for messages. To exit press CTRL+C
+# => [x] Received 'First message.'
+# => [x] Received 'Third message...'
+# => [x] Received 'Fifth message.....'
+```
+```
+# shell 2
+python worker.py
+# => [*] Waiting for messages. To exit press CTRL+C
+# => [x] Received 'Second message..'
+# => [x] Received 'Fourth message....'
+```
+
+By default, RabbitMQ will send each message to the next consumer, in sequence. On average every consumer will get the same number of messages. This way of distributing messages is called round-robin. Try this out with three or more workers.
+
+## Message acknowledgment
+
+Doing a task can take a few seconds, you may wonder what happens if a consumer starts a long task and it terminates before it completes. With our current code once RabbitMQ delivers message to the consumer, it immediately marks it for deletion. In this case, if you terminate a worker, the message it was just processing is lost. The messages that were dispatched to this particular worker but were not yet handled are also lost.
+
+But we don't want to lose any tasks. If a worker dies, we'd like the task to be delivered to another worker.
+
+In order to make sure a message is never lost, RabbitMQ supports message acknowledgments. An ack(nowledgement) is sent back by the consumer to tell RabbitMQ that a particular message had been received, processed and that RabbitMQ is free to delete it.
+
+If a consumer dies (its channel is closed, connection is closed, or TCP connection is lost) without sending an ack, RabbitMQ will understand that a message wasn't processed fully and will re-queue it. If there are other consumers online at the same time, it will then quickly redeliver it to another consumer. That way you can be sure that no message is lost, even if the workers occasionally die.
+
+A timeout (30 minutes by default) is enforced on consumer delivery acknowledgement. This helps detect buggy (stuck) consumers that never acknowledge deliveries. You can increase this timeout as described in Delivery Acknowledgement Timeout.
+
+Manual message acknowledgments are turned on by default. In previous examples we explicitly turned them off via the auto_ack=True flag. It's time to remove this flag and send a proper acknowledgment from the worker, once we're done with a task.
+
+
+### auto acknowledgement mode
+**(autoAck): the messages are automatically removed from the queue as soon as they are sent to the consumer, this is**
+
+### manual Acknowledgement mode
+**(manualAck): the consumer subscribes to a queue, and the messages are removed only when the consumer has sent back an acknowledgement (Ack) back to the broker**
+
+
+```
+def callback(ch, method, properties, body):
+    print(" [x] Received %r" % body.decode())
+    time.sleep(body.count(b'.') )
+    print(" [x] Done")
+    ch.basic_ack(delivery_tag = method.delivery_tag)
+
+channel.basic_consume(queue='hello', on_message_callback=callback)
+```
+
+Using this code, you can ensure that even if you terminate a worker using CTRL+C while it was processing a message, nothing is lost. Soon after the worker terminates, all unacknowledged messages are redelivered.
+
+Acknowledgement must be sent on the same channel that received the delivery. Attempts to acknowledge using a different channel will result in a channel-level protocol exception
+
+## Message durability
+
+We have learned how to make sure that even if the consumer dies, the task isn't lost. But our tasks will still be lost if RabbitMQ server stops.
+
+When RabbitMQ quits or crashes it will forget the queues and messages unless you tell it not to. Two things are required to make sure that messages aren't lost: we need to mark both the queue and messages as durable.
+
+First, we need to make sure that the queue will survive a RabbitMQ node restart. In order to do so, we need to declare it as durable:
+
+```
+channel.queue_declare(queue='hello', durable=True)
+```
+
+Although this command is correct by itself, it won't work in our setup. That's because we've already defined a queue called hello which is not durable. RabbitMQ doesn't allow you to redefine an existing queue with different parameters and will return an error to any program that tries to do that. But there is a quick workaround - let's declare a queue with different name, for example task_queue:
+
+```
+channel.queue_declare(queue='task_queue', durable=True)
+```
+
+This queue_declare change needs to be applied to both the producer and consumer code.
+
+At that point we're sure that the task_queue queue won't be lost even if RabbitMQ restarts. Now we need to mark our messages as persistent - by supplying a delivery_mode property with the value of pika.spec.PERSISTENT_DELIVERY_MODE
+
+```
+channel.basic_publish(exchange='',
+                      routing_key="task_queue",
+                      body=message,
+                      properties=pika.BasicProperties(
+                         delivery_mode = pika.spec.PERSISTENT_DELIVERY_MODE
+                      ))
+```
+
+## Fair dispatch
+
+You might have noticed that the dispatching still doesn't work exactly as we want. For example in a situation with two workers, when all odd messages are heavy and even messages are light, one worker will be constantly busy and the other one will do hardly any work. Well, RabbitMQ doesn't know anything about that and will still dispatch messages evenly.
+
+This happens because RabbitMQ just dispatches a message when the message enters the queue. It doesn't look at the number of unacknowledged messages for a consumer. It just blindly dispatches every n-th message to the n-th consumer.
+
+![13](images/13.png)
+
+In order to defeat that we can use the Channel#basic_qos channel method with the prefetch_count=1 setting. This uses the basic.qos protocol method to tell RabbitMQ not to give more than one message to a worker at a time. Or, in other words, don't dispatch a new message to a worker until it has processed and acknowledged the previous one. Instead, it will dispatch it to the next worker that is not still busy.
+
+```
+channel.basic_qos(prefetch_count=1)
+```
+
+## Explain 
+def callback(ch, method, properties, body): 
+
+### method
+![14](images/14.png)
+
+### properties
+![15](images/15.png)
