@@ -239,7 +239,7 @@ Hurray! We were able to send our first message through RabbitMQ. As you might ha
 
 Try to run send.py again in a new terminal.
 
-# Rabbitmq-plugins
+# rabbitmq-plugins
 
 This command lists all plugins:
 ```
@@ -272,3 +272,43 @@ rabbitmq-plugins disable rabbitmq_management
 The management UI can be accessed using a Web browser at http://{node-hostname}:15672/.
 
 For example, for a node running on a machine with the hostname of warp10.local, it can be accessed by users with sufficient privileges at either http://warp10.local:15672/ or http://localhost:15672/ (provided that localhost resolves correctly).
+
+# rabbitmqctl
+
+rabbitmqctl — tool for managing RabbitMQ nodes
+
+## User Management
+
+Note that all user management commands rabbitmqctl only can manage users in the internal RabbitMQ database. Users from any alternative authentication backends such as LDAP cannot be inspected or managed with those commands.
+
+### add_user
+```
+rabbitmqctl add_user username password
+```
+
+### delete_user
+```
+rabbitmqctl delete_user username
+```
+
+### list_users
+Lists users. Each result row will contain the user name followed by a list of the tags set for that user.
+For example, this command instructs the RabbitMQ broker to list all users:
+
+```    
+rabbitmqctl list_users
+```
+
+### set_user_tags
+For example, this command instructs the RabbitMQ broker to ensure the user named "janeway" is an administrator:
+```
+rabbitmqctl set_user_tags janeway administrator
+```
+
+This has no effect when the user authenticates using a messaging protocol, but can be used to permit the user to manage users, virtual hosts and permissions when the user logs in via some other means (for example with the management plugin).
+
+This command instructs the RabbitMQ broker to remove any tags from the user named "janeway":
+```
+rabbitmqctl set_user_tags janeway
+```
+
