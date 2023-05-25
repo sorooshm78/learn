@@ -1,15 +1,18 @@
 import pika
 import json
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
-import config
+
+exchange_name = "student"
+exchange_type = "direct"
 
 
 class Student(BaseModel):
     first_name: str
     last_name: str
     age: int
+    mail: EmailStr
 
 
 app = FastAPI()
@@ -19,12 +22,8 @@ app = FastAPI()
 async def student_registration(student: Student):
     connection = pika.BlockingConnection(pika.ConnectionParameters(host="localhost"))
     channel = connection.channel()
-    channel.exchange_declare(
-        exchange=config.EXCHANGE_NAME, exchange_type=config.EXCHANGE_TYPE
-    )
-    message = json.dumps(student.dict())
-    channel.basic_publish(
-        exchange=config.EXCHANGE_NAME, routing_key="show", body=message
-    )
+    channel.exchange_declare(exchange=exchange_name, exchange_type=exchange_type)
+    data = json.dumps(student.dict())
+    channel.basic_publish(exchange=exchange_name, routing_key="send_mail", body=data)
 
     return student
