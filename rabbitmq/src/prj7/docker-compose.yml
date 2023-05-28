@@ -1,13 +1,26 @@
 version: "3.9"
 
 services:
+  rabbitmq:
+    container_name: "rabbitmq"
+    image: rabbitmq:3.8.22-alpine
+    expose:
+      - "5672"
+
+  email:
+    build: ./email
+    container_name: email
+    restart: always
+    depends_on:
+      - rabbitmq
+
   web:
     build: ./web
     container_name: web
     restart: always
-    command: >
-      sh -c "uvicorn main:app --host 0.0.0.0 --port 8000"
-    volumes:
-      - ./web:/web
     ports:
       - "8000:8000"
+
+    depends_on:
+      - email
+      - rabbitmq
