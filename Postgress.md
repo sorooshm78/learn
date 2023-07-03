@@ -52,5 +52,14 @@ create database <database_name>;
 ```
 Example
 ```
-psql -d <my_db>
+psql -d <db_name>
+```
+
+In PostgreSQL, you can use the \connect command tool psql:
+```
+\connect <db_name>
+```
+or in short:
+```
+\c <db_name>
 ```
