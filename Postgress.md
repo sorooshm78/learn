@@ -481,3 +481,53 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] name ] ON [ ONLY ] 
     [ WHERE predicate ]
 ```
 ![index](https://dataschool.com/assets/images/sql-optimization/how_to_index/Index_pointsTo_table.png)
+
+## Backup and Restore
+
+for backup
+```
+pg_dump -U <user> <database_name> > <filename>
+pg_dump -U <user> <database_name> -f <filename>
+```
+diffrent format 
+```
+pg_dump -U <user> <database_name> -f <filename> -Fc #(binary format)
+pg_dump -U <user> <database_name> -f <filename> -Fd #(directory)
+pg_dump -U <user> <database_name> -f <filename> -Ft #(tar format) 
+```
+
+for restore 
+```
+\i <backup_filename> # just for sql file
+or
+pg_restore -U <user> -C # create  <backup_filename> -d <database_name> <filename]]]>
+```
+
+## Aggregate Functions
+Aggregate functions compute a single result from a set of input values. The built-in aggregate functions
+
+### avg(expression)
+the average (arithmetic mean) of all input values
+```
+SELECT AVG(price) FROM products
+```
+
+### min(expression)
+minimum value of expression across all input values
+```
+SELECT MIN(price) FROM products
+```
+
+### sum(expression)
+sum of expression across all input values
+```
+SELECT SUM(price) FROM products
+```
+
+### count(*)
+number of input rows
+```
+SELECT COUNT(price) FROM products
+```
+
+
