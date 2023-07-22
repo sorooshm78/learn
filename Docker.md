@@ -24,3 +24,48 @@ docker ps
 
 docker ps -a # all container
 ```
+
+![1](./1.png)
+
+run image
+```
+docker run
+```
+
+run image by name
+```
+docker run --name <container name>
+```
+
+for remove container 
+```
+docker rm <container name>
+```
+
+for remove all of stopped container 
+```
+docker container prune
+```
+
+for run image and delete from stopped container 
+```
+docker run --rm <image name>
+```
+
+for remove image 
+```
+docker rmi <image name>
+```
+
+docker run container with command
+```
+docker run <container name> <command>
+```
+```
+docker run busybox ls 
+```
+
+for interactive 
+```
+docker run -it <conatiner name>
+```
