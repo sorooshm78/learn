@@ -69,3 +69,45 @@ for interactive
 ```
 docker run -it <conatiner name>
 ```
+
+run container in background and print container ID
+```
+docker run <image name> --detach(-d)
+``` 
+
+lifecycle and not stopped
+```
+docker run -dit <image name>
+```
+
+for example 
+```
+docker run -dit busybox
+```
+![2](./2.png)
+
+for create container
+```
+docker create --name <container name> <image>
+``` 
+
+for start container
+```
+docker start <container name>
+```
+
+for restart container
+```
+docker restart <container name>
+```
+
+for stop container
+```
+docker stop <container name>
+```
+
+for kill (stop force) container
+```
+docker kill <container name>
+```
+
