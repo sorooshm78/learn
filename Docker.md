@@ -111,3 +111,12 @@ for kill (stop force) container
 docker kill <container name>
 ```
 
+execute a command in a running container
+```
+docker exec <container name> <command>
+```
+
+for inteactive terminal
+```
+docker exec -it <container name> (bash or sh) 
+```
