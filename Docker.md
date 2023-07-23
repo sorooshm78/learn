@@ -144,6 +144,7 @@ docker run -d --restart <restart poilicy> <image>
 ```
 
 ## Dockerfile
+![3](./3.png)
 ### FROM
 ```
 FROM [--platform=<platform>] <image> [AS <name>]
