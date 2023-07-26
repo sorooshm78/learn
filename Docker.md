@@ -263,12 +263,120 @@ Example
 ```
 docker run -d \
     --name devtest \
-    --mount source=myvol2,target=/app \
-    nginx:latest
+    --mount source=myvol2,target=/app,readonly \
+    nginx:latest 
 ```
 ```
 docker run -d \
     --name devtest \
-    -v myvol2:/app \
+    -v myvol2:/app:ro \
     nginx:latest
 ```
+```
+docker run -itd --name app2 --volumes-from app1 alpine
+```
+## Networking
+Create a network
+Usage
+```
+docker network create [OPTIONS] NETWORK
+```
+
+Refer to the options section for an overview of available OPTIONS for this command.
+Description
+
+Creates a new network. The DRIVER accepts bridge or overlay which are the built-in network drivers. If you have installed a third party or your own custom network driver you can specify that DRIVER here also. If you don’t specify the --driver option, the command automatically creates a bridge network for you. When you install Docker Engine it creates a bridge network automatically. This network corresponds to the docker0 bridge that Engine has traditionally relied on. When you launch a new container with docker run it automatically connects to this bridge network. You cannot remove this default bridge network, but you can create new ones using the network create command.
+
+```
+docker network create -d bridge my-bridge-network
+```
+
+## Docker Compose
+Compose is a tool for defining and running multi-container Docker applications. With Compose, you use a YAML file to configure your application’s services. Then, with a single command, you create and start all the services from your configuration.
+
+Compose works in all environments: production, staging, development, testing, as well as CI workflows. It also has commands for managing the whole lifecycle of your application:
+
+* Start, stop, and rebuild services
+* View the status of running services
+* Stream the log output of running services
+* Run a one-off command on a service
+
+Example
+```
+services:
+    rabbitmq:
+        container_name: rabbitmq
+        image: rabbitmq:latest
+        networks:
+          - main
+        ports:
+            - "5672:5672"
+        restart: on-failure
+
+    postgres:
+        container_name: postgres
+        image: postgres:latest
+        environment:
+            - POSTGRES_DB=postgres
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+        networks:
+            - main
+        ports:
+            - "5432:5432"
+        restart: on-failure
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+    celery_worker:
+        container_name: celery_worker
+        command: "celery -A A worker -l INFO"
+        depends_on:
+            - app
+            - rabbitmq
+            - postgres
+        image: app-image
+        environment:
+            - C_FORCE_ROOT="true"
+        networks:
+            - main
+        restart: on-failure
+
+    app:
+        build: .
+        command: sh -c "python manage.py migrate && gunicorn A.wsgi -b 0.0.0.0:8000"
+        container_name: app
+        volumes:
+            - .:/code/
+        depends_on:
+            - postgres
+            - rabbitmq
+        expose:
+            - "8000"
+        networks:
+            - main
+        restart: on-failure
+
+    nginx:
+        container_name: nginx
+        command: nginx -g 'daemon off;'
+        depends_on:
+            - app
+        image: nginx:latest
+        networks:
+            - main
+        ports:
+            - "80:80"
+        restart: on-failure
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf
+
+
+networks:
+    main:
+
+volumes:
+    postgres_data:
+```
+
+## Danging Image
