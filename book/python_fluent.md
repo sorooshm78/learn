@@ -138,3 +138,52 @@ do not modify either operand—self or other are merely read
 a * b -> a.__mul__(b)
 a * b -> b.__rmul__(a)
 ```
+
+The __repr__ special method is called by the repr built-in to get the string represen‐
+tation of the object for inspection. Without a custom __repr__, Python’s console
+would display a Vector instance <Vector object at 0x10e100070>
+
+The interactive console and debugger call repr on the results of the expressions eval‐
+uated, as does the %r placeholder in classic formatting with the % operator, and the !r
+conversion field in the new format string syntax used in f-strings the str.format
+method
+
+classic formatting
+```
+"old format %r" % ("str") -> "old format 'str'"
+```
+
+new formatting
+```
+"new format {'str'!r}" -> "new format 'str'"
+```
+
+Sometimes same string returned by __repr__ is user-friendly, and you don’t need to
+code __str__ because the implementation inherited from the object class calls
+__repr__ as a fallback.
+
+Programmers with prior experience in languages with a toString
+method tend to implement __str__ and not __repr__. If you only
+implement one of these special methods in Python, choose
+__repr__.
+
+By default, instances of user-defined classes are considered truthy, unless either
+__bool__ or __len__ is implemented. Basically, bool(x) calls x.__bool__() and uses
+the result. If __bool__ is not implemented, Python tries to invoke x.__len__(), and
+if that returns zero, bool returns False. Otherwise bool returns True.
+
+```
+class A:
+    # must return True or False
+    def __bool__(self):
+        return true
+
+    def __len__(self):
+        return 0
+
+a = A()
+
+bool(a)
+# call __bool__()
+# if not exist __bool__() then call __len__() if return 0 bool func return False else return True 
+```
