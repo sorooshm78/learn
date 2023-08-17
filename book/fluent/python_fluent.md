@@ -187,3 +187,71 @@ bool(a)
 # call __bool__()
 # if not exist __bool__() then call __len__() if return 0 bool func return False else return True 
 ```
+
+## Collection API
+documents the interfaces of the essential collection types in the language.
+All the classes in the diagram are ABCs—abstract base classes.
+
+![1](images/1.png)
+
+UML class diagram with fundamental collection types. Method names in
+italic are abstract, so they must be implemented by concrete subclasses such as list
+and dict. The remaining methods have concrete implementations, therefore subclasses
+can inherit them.
+
+concrete method (normal method) != abstract method 
+concrete class != abstract class 
+
+every collection should implement:
+• Iterable to support for, unpacking, and other forms of iteration
+• Sized to support the len built-in function
+• Container to support the in operator
+
+Python does not require concrete classes to actually inherit from any of these ABCs.
+Any class that implements __len__ satisfies the Sized interface.
+
+Three very important specializations of Collection are:
+• Sequence, formalizing the interface of built-ins like list and str
+• Mapping, implemented by dict, collections.defaultdict, etc.
+• Set, the interface of the set and frozenset built-in types
+
+Defaultdict is a container like dictionaries present in the module collections. Defaultdict is a sub-class of the dictionary class that returns a dictionary-like object. The functionality of both dictionaries and defaultdict are almost same except for the fact that defaultdict never raises a KeyError. It provides a default value for the key that does not exists
+
+```
+Syntax: defaultdict(default_factory)
+Parameters:  
+
+    default_factory: A function returning the default value for the dictionary defined. If this argument is absent then the dictionary raises a KeyError.
+```
+
+```
+from collections import defaultdict
+
+def def_value():
+    return "Not Present"
+
+d = defaultdict(def_value)
+d["a"] = 1
+d["b"] = 2
+
+print(d["a"])
+print(d["b"])
+print(d["c"])
+```
+
+Output:
+```
+1
+2
+Not Present 
+```
+
+Inner Working of defaultdict
+The __missing__(self, key) method defines the behavior of a dictionary subclass if you access a non-existent key. More specifically, Python’s __getitem__() dictionary method internally calls the __missing__() method if the key doesn’t exist. The return value of __missing__() is the value to be returned when trying to access a non-existent key.
+
+Since Python 3.7, the dict type is officially “ordered,” but that only
+means that the key insertion order is preserved. You cannot
+rearrange the keys in a dict however you like.
+
+https://www.fluentpython.com/extra/internals-of-sets-and-dicts/  or  [link](set_and_dict.html)
+
