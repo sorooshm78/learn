@@ -254,4 +254,4 @@ means that the key insertion order is preserved. You cannot
 rearrange the keys in a dict however you like.
 
 https://www.fluentpython.com/extra/internals-of-sets-and-dicts/  or  [link](set_and_dict.html)
-
+https://tenthousandmeters.com/
