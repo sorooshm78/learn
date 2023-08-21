@@ -255,3 +255,92 @@ rearrange the keys in a dict however you like.
 
 https://www.fluentpython.com/extra/internals-of-sets-and-dicts/  or  [link](set_and_dict.html)
 https://tenthousandmeters.com/
+
+__init_subclass__
+
+To have a clear understanding of using init_subclass, let’s have a look at a simple example. Imagine a base class, Animal, with diverse subclasses, along with Cat, Dog, and Fish. We want to ensure that each time a new Animal subclass is created, a category attribute called 'species' is assigned.
+```
+class Animal:
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if not hasattr(cls, 'species'):
+            raise TypeError(f"{cls.__name__} must have a 'species' attribute")
+   
+class Cat(Animal):
+    species = 'Feline'
+
+class Dog(Animal):
+    species = 'Canine'
+
+class Fish(Animal):  # This will raise a TypeError
+    pass
+```
+
+```
+class Plugin:
+    _registry = {}
+   
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls._registry[cls.__name__] = cls
+
+class PluginA(Plugin):
+    pass
+
+class PluginB(Plugin):
+    pass
+
+print(Plugin._registry)
+```
+
+Output
+```
+{'PluginA': <class 'main.PluginA'>, 'PluginB': <class 'main.PluginB'>}
+```
+
+Always Invoke super().__init_subclass__()
+
+When enforcing __init_subclass__, it is important to name the super().__init_subclass__(**kwargs) technique. This ensures that the base class's __init_subclass__ method is achieved, permitting the right inheritance and the ideal behavior of the method in multiple inheritance situations
+
+__getattr__
+
+```
+class Dummy(object):
+    pass
+
+d = Dummy()
+d.does_not_exist  # Fails with AttributeError
+```
+
+```
+class Dummy(object):
+    def __getattr__(self, attr):
+        return attr.upper()
+
+d = Dummy()
+d.does_not_exist # 'DOES_NOT_EXIST'
+d.what_about_this_one  # 'WHAT_ABOUT_THIS_ONE'
+```
+
+```
+class Dummy(object):
+    def __getattr__(self, attr):
+        return attr.upper()
+
+d = Dummy()
+d.value = "Python"
+print(d.value)  # "Python"
+```
+
+__getattribute__
+
+__getattribute__ is similar to __getattr__, with the important difference that __getattribute__ will intercept EVERY attribute lookup, doesn’t matter if the attribute exists or not. Let me show you a simple example:
+```
+class Dummy(object):
+    def __getattribute__(self, attr):
+        return 'YOU SEE ME?'
+
+d = Dummy()
+d.value = "Python"
+print(d.value)  # "YOU SEE ME?"
+```
