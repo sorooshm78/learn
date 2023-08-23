@@ -345,6 +345,7 @@ d.value = "Python"
 print(d.value)  # "YOU SEE ME?"
 ```
 
+Example 1
 ```
 import bisect
 import sys
@@ -371,5 +372,40 @@ if __name__ == '__main__':
     demo(bisect_fn)
 ```
 
-![E1](./images/02.png)
+![E2](./images/02.png)
 
+Second, bisect is actually an alias for bisect_right, and there is a sister function called bisect_left. Their difference is apparent only when the needle compares equal to an item in the list: bisect_right returns an insertion point after the existing item, and bisect_left returns the position of the existing item, so insertion would occur before it. With simple types like int, inserting before or after makes no difference, but if the sequence contains objects that are distinct yet compare equal, then it may be relevant. For example, 1 and 1.0 are distinct, but 1 == 1.0 is True. Figure 2 shows the result of using bisect_left.
+
+![E3](./images/03.png)
+
+Example 1 with bisect_left in use (compare with Figure 1 and note the insertion points for the values 1, 8, 23, 29, and 30 to the left of the same numbers in the haystack).
+
+An interesting application of bisect is to perform table lookups by numeric values—​for example, to convert test scores to letter grades, as in Example 2.
+Example 2. Given a test score, grade returns the corresponding letter grade
+
+```
+>>> breakpoints = [60, 70, 80, 90]
+>>> grades='FDCBA'
+>>> def grade(score):
+...     i = bisect.bisect(breakpoints, score)
+...     return grades[i]
+...
+>>> [grade(score) for score in [55, 60, 65, 70, 75, 80, 85, 90, 95]]
+['F', 'D', 'D', 'C', 'C', 'B', 'B', 'A', 'A']
+```
+
+The code in Example 2 is from the bisect module documentation, which also lists functions to use bisect as a faster replacement for the index method when searching through long ordered sequences of numbers.
+
+When used for table lookups, bisect_left produces very different results[1]. Note the letter grade results in Example 3.
+Example 3. bisect_left maps a score of 60 to grade 'F', not 'D' as in Example 2.
+
+```
+>>> breakpoints = [60, 70, 80, 90]
+>>> grades='FDCBA'
+>>> def grade(score):
+...     i = bisect.bisect_left(breakpoints, score)
+...     return grades[i]
+...
+>>> [grade(score) for score in [55, 60, 65, 70, 75, 80, 85, 90, 95]]
+['F', 'F', 'D', 'D', 'C', 'C', 'B', 'B', 'A']
+```
