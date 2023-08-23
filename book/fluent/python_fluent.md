@@ -345,6 +345,14 @@ d.value = "Python"
 print(d.value)  # "YOU SEE ME?"
 ```
 
+## bisect
+he bisect module offers two main functions that use the binary search algorithm to quickly find and insert items in any sorted sequence.
+
+* Searching with bisect
+* Inserting with insort
+
+### Searching with bisect
+
 Example 1
 ```
 import bisect
