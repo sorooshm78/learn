@@ -417,3 +417,30 @@ Example 3. bisect_left maps a score of 60 to grade 'F', not 'D' as in Example 2.
 >>> [grade(score) for score in [55, 60, 65, 70, 75, 80, 85, 90, 95]]
 ['F', 'F', 'D', 'D', 'C', 'C', 'B', 'B', 'A']
 ```
+
+### Inserting with insort
+
+Sorting is expensive, so once you have a sorted sequence, it’s good to keep it that way. That is why bisect.insort was created.
+
+insort(seq, item) inserts item into seq so as to keep seq in ascending order. See Example 4 and its output in Figure 3.
+Example 4. Insort keeps a sorted sequence always sorted
+
+```
+import bisect
+import random
+
+SIZE = 7
+
+random.seed(1729)
+
+my_list = []
+for i in range(SIZE):
+    new_item = random.randrange(SIZE * 2)
+    bisect.insort(my_list, new_item)
+    print(f'{new_item:2d} -> {my_list}')
+```
+![E4](./images/04.png)
+
+Figure 3. Output of Example 4
+Like bisect, insort takes optional lo, hi arguments to limit the search to a sub-sequence. There is also an insort_left variation that uses bisect_left to find insertion points.
+
