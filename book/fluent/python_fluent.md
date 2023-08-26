@@ -502,3 +502,53 @@ True
 ```
 
 ![E6](./images/06.png)
+
+## List Comprehensions and Generator Expressions
+
+A quick way to build a sequence is using a list comprehension (if the target is a list)
+or a generator expression (for other kinds of sequences). If you are not using these
+syntactic forms on a daily basis, I bet you are missing opportunities to write code that
+is more readable and often faster at the same time.
+If you doubt my claim that these constructs are “more readable,” read on. I’ll try to
+convince you.
+
+Here is a test: which do you find easier to read, Example 2-1 or Example 2-2?
+Example 2-1. Build a list of Unicode code points from a string
+```
+>>> symbols = '$¢£¥€¤'
+>>> codes = []
+>>> for symbol in symbols:
+...
+codes.append(ord(symbol))
+...
+>>> codes
+[36, 162, 163, 165, 8364, 164]
+```
+
+Example 2-2. Build a list of Unicode code points from a string, using a listcomp
+```
+>>> symbols = '$¢£¥€¤'
+>>> codes = [ord(symbol) for symbol in symbols]
+>>> codes
+[36, 162, 163, 165, 8364, 164]
+```
+
+
+Python ord()
+
+The ord() function returns an integer representing the Unicode character.
+
+A for loop may be used to do lots of different things: scanning a sequence to count or
+pick items, computing aggregates (sums, averages), or any number of other tasks.
+The code in Example 2-1 is building up a list. In contrast, a listcomp is more explicit.
+Its goal is always to build a new list.
+
+Of course, it is possible to abuse list comprehensions to write truly incomprehensible
+code. I’ve seen Python code with listcomps used just to repeat a block of code for its
+side effects. If you are not doing something with the produced list, you should not use
+that syntax. Also, try to keep it short. If the list comprehension spans more than two
+lines, it is probably best to break it apart or rewrite it as a plain old for loop. Use your
+best judgment: for Python, as for English, there are no hard-and-fast rules for clear
+writing
+
+
