@@ -552,3 +552,102 @@ best judgment: for Python, as for English, there are no hard-and-fast rules for 
 writing
 
 
+In Python code, line breaks are ignored inside pairs of [], {}, or ().
+So you can build multiline lists, listcomps, tuples, dictionaries, etc.,
+without using the \ line continuation escape, which doesn’t work if
+you accidentally type a space after it. Also, when those delimiter
+pairs are used to define a literal with a comma-separated series of
+items, a trailing comma will be ignored. So, for example, when cod‐
+ing a multiline list literal, it is thoughtful to put a comma after the
+last item, making it a little easier for the next coder to add one
+more item to that list, and reducing noise when reading diffs.
+
+```
+[something_that_is_pretty_long
+for something_that_is_pretty_long
+in somethings_that_are_pretty_long]
+```
+You don't need \ in this case. In general, I think people avoid \ because it's slightly ugly, but also can give problems if it's not the very last thing on the line (make sure no whitespace follows it). I think it's much better to use it than not, though, in order to keep your line lengths down.
+
+Since \ isn't necessary in the above case, or for parenthesized expressions, I actually find it fairly rare that I even need to use it.
+
+```
+new_list = [
+    {
+        'attribute 1': a_very_long_item.attribute1,
+        'attribute 2': a_very_long_item.attribute2,
+        'list_attribute': [
+            {
+                'dict_key_1': attribute_item.attribute2,
+                'dict_key_2': attribute_item.attribute2
+            }
+            for attribute_item
+            in a_very_long_item.list_of_items
+         ]
+    }
+    for a_very_long_item
+    in a_very_long_list
+    if a_very_long_item not in [some_other_long_item
+        for some_other_long_item 
+        in some_other_long_list
+    ]
+]
+```
+
+In Python 3, list comprehensions, generator expressions, and their siblings set and
+dict comprehensions, have a local scope to hold the variables assigned in the for
+clause.
+However, variables assigned with the “Walrus operator” := remain accessible after
+those comprehensions or expressions return—unlike local variables in a function.
+PEP 572—Assignment Expressions defines the scope of the target of := as the enclos‐
+ing function, unless there is a global or nonlocal declaration for that target
+
+```
+>>> x = 'ABC'
+>>> codes = [ord(x) for x in x]
+>>> x
+'ABC'
+>>> codes
+[65, 66, 67]
+>>> codes = [last := ord(c) for c in x]
+>>> last
+67
+>>> c
+Traceback (most recent call last):
+File "<stdin>", line 1, in <module> NameError: name 'c' is not defined
+```
+
+* x was not clobbered: it’s still bound to 'ABC'.
+* last remains.
+* c is gone; it existed only inside the listcomp.
+
+```
+[o for v in [v1, v2, v3, v4] if (o := map_to_obj(v))]
+```
+
+### filter()
+
+The filter() function selects elements from an iterable (list, tuple etc.) based on the output of a function.
+The function is applied to each element of the iterable and if it returns True, the element is selected by the filter() function.
+
+```
+def check_even(number):
+    if number % 2 == 0:
+          return True  
+    return False
+
+numbers = [1,2,3,4,5,6,7,8,9,10]
+
+filter(check_even, numbers)
+# <filter object at 0x7fa81c941ff0>
+
+list(filter(check_even, numbers))
+# [2, 4, 6, 8, 10]
+```
+
+filter() Syntax
+
+The syntax of filter() is:
+```
+filter(function, iterable)
+```
