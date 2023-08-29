@@ -651,3 +651,152 @@ The syntax of filter() is:
 ```
 filter(function, iterable)
 ```
+
+### Listcomps Versus map and filter -> listcomps vs map and filter
+Listcomps do everything the map and filter functions do, without the contortions of
+the functionally challenged Python lambda. Consider Example 2-3.
+
+```
+Example 2-3. The same list built by a listcomp and a map/filter composition
+>>> symbols = '$¢£¥€¤'
+>>> beyond_ascii = [ord(s) for s in symbols if ord(s) > 127]
+>>> beyond_ascii
+[162, 163, 165, 8364, 164]
+>>> beyond_ascii = list(filter(lambda c: c > 127, map(ord, symbols)))
+>>> beyond_ascii
+[162, 163, 165, 8364, 164]
+```
+
+I used to believe that map and filter were faster than the equivalent listcomps, but
+Alex Martelli pointed out that’s not the case—at least not in the preceding examples.
+The 02-array-seq/listcomp_speed.py script in the Fluent Python code repository is a
+simple speed test comparing listcomp with filter/map.
+I’ll have more to say about map and filter in Chapter 7. Now we turn to the use of
+listcomps to compute Cartesian products: a list containing tuples built from all items
+from two or more lists.
+
+
+```
+import timeit
+
+TIMES = 10000
+
+SETUP = """
+symbols = '$¢£¥€¤'
+def non_ascii(c):
+    return c > 127
+"""
+
+def clock(label, cmd):
+    res = timeit.repeat(cmd, setup=SETUP, number=TIMES)
+    print(label, *(f'{x:.3f}' for x in res))
+
+clock('listcomp        :', '[ord(s) for s in symbols if ord(s) > 127]')
+# listcomp        : 0.008 0.005 0.005 0.005 0.005
+
+clock('listcomp + func :', '[ord(s) for s in symbols if non_ascii(ord(s))]')
+# listcomp + func : 0.012 0.008 0.008 0.007 0.008
+
+clock('filter + lambda :', 'list(filter(lambda c: c > 127, map(ord, symbols)))')
+# filter + lambda : 0.033 0.014 0.010 0.008 0.007
+
+
+clock('filter + func   :', 'list(filter(non_ascii, map(ord, symbols)))')
+# filter + func   : 0.032 0.015 0.010 0.008 0.007
+```
+
+### Cartesian Products
+Listcomps can build lists from the Cartesian product of two or more iterables
+
+For example, imagine you need to produce a list of T-shirts available in two colors
+and three sizes. Example 2-4 shows how to produce that list using a listcomp. The
+result has six items.
+
+Example 2-4. Cartesian product using a list comprehension
+```
+>>> colors = ['black', 'white']
+>>> sizes = ['S', 'M', 'L']
+>>> tshirts = [(color, size) for color in colors for size in sizes] # 1
+>>> tshirts
+[('black', 'S'), ('black', 'M'), ('black', 'L'), ('white', 'S'),
+('white', 'M'), ('white', 'L')]
+>>> for color in colors:                                            # 2
+...    for size in sizes:
+...      print((color, size))
+...
+('black', 'S')
+('black', 'M')
+('black', 'L')
+('white', 'S')
+('white', 'M')
+('white', 'L')
+>>> tshirts = [(color, size) for size in sizes for color in colors] # 3
+>>> tshirts
+[('black', 'S'), ('white', 'S'), ('black', 'M'), ('white', 'M'),
+('black', 'L'), ('white', 'L')]
+```
+
+1. This generates a list of tuples arranged by color, then size.
+
+2. Note how the resulting list is arranged as if the for loops were nested in the same
+order as they appear in the listcomp.
+
+3. To get items arranged by size, then color, just rearrange the for clauses; adding a
+line break to the listcomp makes it easier to see how the result will be ordered.
+
+a list made of 52 cards from all 13 ranks of each of the 4 suits, sorted by suit,
+then rank:
+
+```
+self._cards = [Card(rank, suit) for suit in self.suits
+                                    for rank in self.ranks]
+```
+
+### Generator Expressions
+To initialize tuples, arrays, and other types of sequences, you could also start from a
+listcomp, but a genexp (generator expression) saves memory because it yields items
+one by one using the iterator protocol instead of building a whole list just to feed
+another constructor.
+Genexps use the same syntax as listcomps, but are enclosed in parentheses rather
+than brackets.
+
+Generator Expression Syntax
+A generator expression has the following syntax,
+```
+(expression for item in iterable)
+```
+Here, expression is a value that will be returned for each item in the iterable.
+The generator expression creates a generator object that produces the values of expression for each item in the iterable, one at a time, when iterated over.
+
+```
+>>> symbols = '$¢£¥€¤'
+>>> tuple(ord(symbol) for symbol in symbols)
+(36, 162, 163, 165, 8364, 164)
+>>> import array
+>>> array.array('I', (ord(symbol) for symbol in symbols))
+array('I', [36, 162, 163, 165, 8364, 164])
+```
+
+1. If the generator expression is the single argument in a function call, there is no
+need to duplicate the enclosing parentheses.
+
+```
+tuple(ord(symbol) for symbol in symbols) == tuple((ord(symbol) for symbol in symbols))
+```
+
+2. The array constructor takes two arguments, so the parentheses around the generator expression are mandatory. The first argument of the array constructor
+defines the storage type used for the numbers in the array, as we’ll see in “Arrays”
+on page 59.
+
+### Creating Python Arrays
+To create an array of numeric values, we need to import the array module. For example:
+```
+import array as arr
+a = arr.array('d', [1.1, 3.5, 4.5])
+print(a)
+```
+
+Output
+```
+array('d', [1.1, 3.5, 4.5])
+```
