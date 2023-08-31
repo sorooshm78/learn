@@ -800,3 +800,102 @@ Output
 ```
 array('d', [1.1, 3.5, 4.5])
 ```
+
+Example 2-6 uses a genexp with a Cartesian product to print out a roster of T-shirts
+of two colors in three sizes. In contrast with Example 2-4, here the six-item list of T-
+shirts is never built in memory: the generator expression feeds the for loop produc‐
+ing one item at a time. If the two lists used in the Cartesian product had a thousand
+items each, using a generator expression would save the cost of building a list with a
+million items just to feed the for loop.
+Example 2-6. Cartesian product in a generator expression
+```
+>>> colors = ['black', 'white']
+>>> sizes = ['S', 'M', 'L']
+>>> for tshirt in (f'{c} {s}' for c in colors for s in sizes):
+...
+print(tshirt)
+...
+black S
+black M
+black L
+white S
+white M
+white L
+```
+
+## Tuples Are Not Just Immutable Lists
+Some introductory texts about Python present tuples as “immutable lists,” but that is
+short selling them. Tuples do double duty: they can be used as immutable lists and
+also as records with no field names. This use is sometimes overlooked, so we will start
+with that.
+
+### Tuples as Records
+Tuples hold records: each item in the tuple holds the data for one field, and the posi‐
+tion of the item gives its meaning.
+If you think of a tuple just as an immutable list, the quantity and the order of the
+items may or may not be important, depending on the context. But when using a
+tuple as a collection of fields, the number of items is usually fixed and their order is
+always important.
+Example 2-7 shows tuples used as records. Note that in every expression, sorting the
+tuple would destroy the information because the meaning of each field is given by its
+position in the tuple.
+Example 2-7. Tuples used as records
+
+```
+>>> lax_coordinates = (33.9425, -118.408056)
+>>> city, year, pop, chg, area = ('Tokyo', 2003, 32_450, 0.66, 8014)
+>>> traveler_ids = [('USA', '31195855'), ('BRA', 'CE342567'),
+...
+('ESP', 'XDA205856')]
+>>> for passport in sorted(traveler_ids):
+...
+print('%s/%s' % passport)
+...
+BRA/CE342567
+ESP/XDA205856
+USA/31195855
+>>> for country, _ in traveler_ids:
+...
+print(country)
+...
+USA
+BRA
+ESP
+```
+
+1. Latitude and longitude of the Los Angeles International Airport.
+
+2. Data about Tokyo: name, year, population (thousands), population change (%),
+and area (km²).
+
+3. A list of tuples of the form (country_code, passport_number).
+
+4. As we iterate over the list, passport is bound to each tuple.
+
+5. The % formatting operator understands tuples and treats each item as a separate
+field.
+
+6. The for loop knows how to retrieve the items of a tuple separately—this is called
+“unpacking.” Here we are not interested in the second item, so we assign it to _, a
+dummy variable.
+
+****
+In general, using _ as a dummy variable is just a convention. It’s
+just a strange but valid variable name. However, in a match/case
+statement, _ is a wildcard that matches any value but is not bound
+to a value. See “Pattern Matching with Sequences” on page 38. And
+in the Python console, the result of the preceding command is
+assigned to _—unless the result is None
+****
+
+```
+traveler_ids = [('USA', '31195855'), ('BRA', 'CE342567')]
+for country, _ in traveler_ids:
+    print(f"country -> {country}")
+    print(f"value of _ -> {_}")
+
+# country -> USA
+# value of _ -> 31195855
+# country -> BRA
+# value of _ -> CE342567
+```
