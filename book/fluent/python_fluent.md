@@ -503,6 +503,7 @@ True
 
 ![E6](./images/06.png)
 
+
 ## List Comprehensions and Generator Expressions
 
 A quick way to build a sequence is using a list comprehension (if the target is a list)
@@ -651,3 +652,274 @@ The syntax of filter() is:
 ```
 filter(function, iterable)
 ```
+
+### Listcomps Versus map and filter -> listcomps vs map and filter
+Listcomps do everything the map and filter functions do, without the contortions of
+the functionally challenged Python lambda. Consider Example 2-3.
+
+```
+Example 2-3. The same list built by a listcomp and a map/filter composition
+>>> symbols = '$¢£¥€¤'
+>>> beyond_ascii = [ord(s) for s in symbols if ord(s) > 127]
+>>> beyond_ascii
+[162, 163, 165, 8364, 164]
+>>> beyond_ascii = list(filter(lambda c: c > 127, map(ord, symbols)))
+>>> beyond_ascii
+[162, 163, 165, 8364, 164]
+```
+
+I used to believe that map and filter were faster than the equivalent listcomps, but
+Alex Martelli pointed out that’s not the case—at least not in the preceding examples.
+The 02-array-seq/listcomp_speed.py script in the Fluent Python code repository is a
+simple speed test comparing listcomp with filter/map.
+I’ll have more to say about map and filter in Chapter 7. Now we turn to the use of
+listcomps to compute Cartesian products: a list containing tuples built from all items
+from two or more lists.
+
+
+```
+import timeit
+
+TIMES = 10000
+
+SETUP = """
+symbols = '$¢£¥€¤'
+def non_ascii(c):
+    return c > 127
+"""
+
+def clock(label, cmd):
+    res = timeit.repeat(cmd, setup=SETUP, number=TIMES)
+    print(label, *(f'{x:.3f}' for x in res))
+
+clock('listcomp        :', '[ord(s) for s in symbols if ord(s) > 127]')
+# listcomp        : 0.008 0.005 0.005 0.005 0.005
+
+clock('listcomp + func :', '[ord(s) for s in symbols if non_ascii(ord(s))]')
+# listcomp + func : 0.012 0.008 0.008 0.007 0.008
+
+clock('filter + lambda :', 'list(filter(lambda c: c > 127, map(ord, symbols)))')
+# filter + lambda : 0.033 0.014 0.010 0.008 0.007
+
+
+clock('filter + func   :', 'list(filter(non_ascii, map(ord, symbols)))')
+# filter + func   : 0.032 0.015 0.010 0.008 0.007
+```
+
+### Cartesian Products
+Listcomps can build lists from the Cartesian product of two or more iterables
+
+For example, imagine you need to produce a list of T-shirts available in two colors
+and three sizes. Example 2-4 shows how to produce that list using a listcomp. The
+result has six items.
+
+Example 2-4. Cartesian product using a list comprehension
+```
+>>> colors = ['black', 'white']
+>>> sizes = ['S', 'M', 'L']
+>>> tshirts = [(color, size) for color in colors for size in sizes] # 1
+>>> tshirts
+[('black', 'S'), ('black', 'M'), ('black', 'L'), ('white', 'S'),
+('white', 'M'), ('white', 'L')]
+>>> for color in colors:                                            # 2
+...    for size in sizes:
+...      print((color, size))
+...
+('black', 'S')
+('black', 'M')
+('black', 'L')
+('white', 'S')
+('white', 'M')
+('white', 'L')
+>>> tshirts = [(color, size) for size in sizes for color in colors] # 3
+>>> tshirts
+[('black', 'S'), ('white', 'S'), ('black', 'M'), ('white', 'M'),
+('black', 'L'), ('white', 'L')]
+```
+
+1. This generates a list of tuples arranged by color, then size.
+
+2. Note how the resulting list is arranged as if the for loops were nested in the same
+order as they appear in the listcomp.
+
+3. To get items arranged by size, then color, just rearrange the for clauses; adding a
+line break to the listcomp makes it easier to see how the result will be ordered.
+
+a list made of 52 cards from all 13 ranks of each of the 4 suits, sorted by suit,
+then rank:
+
+```
+self._cards = [Card(rank, suit) for suit in self.suits
+                                    for rank in self.ranks]
+```
+
+### Generator Expressions
+To initialize tuples, arrays, and other types of sequences, you could also start from a
+listcomp, but a genexp (generator expression) saves memory because it yields items
+one by one using the iterator protocol instead of building a whole list just to feed
+another constructor.
+Genexps use the same syntax as listcomps, but are enclosed in parentheses rather
+than brackets.
+
+Generator Expression Syntax
+A generator expression has the following syntax,
+```
+(expression for item in iterable)
+```
+Here, expression is a value that will be returned for each item in the iterable.
+The generator expression creates a generator object that produces the values of expression for each item in the iterable, one at a time, when iterated over.
+
+```
+>>> symbols = '$¢£¥€¤'
+>>> tuple(ord(symbol) for symbol in symbols)
+(36, 162, 163, 165, 8364, 164)
+>>> import array
+>>> array.array('I', (ord(symbol) for symbol in symbols))
+array('I', [36, 162, 163, 165, 8364, 164])
+```
+
+1. If the generator expression is the single argument in a function call, there is no
+need to duplicate the enclosing parentheses.
+
+```
+tuple(ord(symbol) for symbol in symbols) == tuple((ord(symbol) for symbol in symbols))
+```
+
+2. The array constructor takes two arguments, so the parentheses around the generator expression are mandatory. The first argument of the array constructor
+defines the storage type used for the numbers in the array, as we’ll see in “Arrays”
+on page 59.
+
+### Creating Python Arrays
+To create an array of numeric values, we need to import the array module. For example:
+```
+import array as arr
+a = arr.array('d', [1.1, 3.5, 4.5])
+print(a)
+```
+
+Output
+```
+array('d', [1.1, 3.5, 4.5])
+```
+
+Example 2-6 uses a genexp with a Cartesian product to print out a roster of T-shirts
+of two colors in three sizes. In contrast with Example 2-4, here the six-item list of T-
+shirts is never built in memory: the generator expression feeds the for loop produc‐
+ing one item at a time. If the two lists used in the Cartesian product had a thousand
+items each, using a generator expression would save the cost of building a list with a
+million items just to feed the for loop.
+Example 2-6. Cartesian product in a generator expression
+```
+>>> colors = ['black', 'white']
+>>> sizes = ['S', 'M', 'L']
+>>> for tshirt in (f'{c} {s}' for c in colors for s in sizes):
+...
+print(tshirt)
+...
+black S
+black M
+black L
+white S
+white M
+white L
+```
+
+## Tuples Are Not Just Immutable Lists
+Some introductory texts about Python present tuples as “immutable lists,” but that is
+short selling them. Tuples do double duty: they can be used as immutable lists and
+also as records with no field names. This use is sometimes overlooked, so we will start
+with that.
+
+### Tuples as Records
+Tuples hold records: each item in the tuple holds the data for one field, and the posi‐
+tion of the item gives its meaning.
+If you think of a tuple just as an immutable list, the quantity and the order of the
+items may or may not be important, depending on the context. But when using a
+tuple as a collection of fields, the number of items is usually fixed and their order is
+always important.
+Example 2-7 shows tuples used as records. Note that in every expression, sorting the
+tuple would destroy the information because the meaning of each field is given by its
+position in the tuple.
+Example 2-7. Tuples used as records
+
+```
+>>> lax_coordinates = (33.9425, -118.408056)
+>>> city, year, pop, chg, area = ('Tokyo', 2003, 32_450, 0.66, 8014)
+>>> traveler_ids = [('USA', '31195855'), ('BRA', 'CE342567'),
+...
+('ESP', 'XDA205856')]
+>>> for passport in sorted(traveler_ids):
+...
+print('%s/%s' % passport)
+...
+BRA/CE342567
+ESP/XDA205856
+USA/31195855
+>>> for country, _ in traveler_ids:
+...
+print(country)
+...
+USA
+BRA
+ESP
+```
+
+1. Latitude and longitude of the Los Angeles International Airport.
+
+2. Data about Tokyo: name, year, population (thousands), population change (%),
+and area (km²).
+
+3. A list of tuples of the form (country_code, passport_number).
+
+4. As we iterate over the list, passport is bound to each tuple.
+
+5. The % formatting operator understands tuples and treats each item as a separate
+field.
+
+6. The for loop knows how to retrieve the items of a tuple separately—this is called
+“unpacking.” Here we are not interested in the second item, so we assign it to _, a
+dummy variable.
+
+****
+In general, using _ as a dummy variable is just a convention. It’s
+just a strange but valid variable name. However, in a match/case
+statement, _ is a wildcard that matches any value but is not bound
+to a value. See “Pattern Matching with Sequences” on page 38. And
+in the Python console, the result of the preceding command is
+assigned to _—unless the result is None
+****
+
+```
+traveler_ids = [('USA', '31195855'), ('BRA', 'CE342567')]
+for country, _ in traveler_ids:
+    print(f"country -> {country}")
+    print(f"value of _ -> {_}")
+
+# country -> USA
+# value of _ -> 31195855
+# country -> BRA
+# value of _ -> CE342567
+```
+
+### Tuples as Immutable Lists
+The Python interpreter and standard library make extensive use of tuples as immuta‐
+ble lists, and so should you. This brings two key benefits:
+
+* Clarity
+
+When you see a tuple in code, you know its length will never change.
+
+* Performance
+
+A tuple uses less memory than a list of the same length, and it allows Python
+to do some optimizations.
+
+However, be aware that the immutability of a tuple only applies to the references
+contained in it. References in a tuple cannot be deleted or replaced. But if one of
+those references points to a mutable object, and that object is changed, then the value
+of the tuple changes. The next snippet illustrates this point by creating two tuples—a
+and b—which are initially equal. Figure 2-4 represents the initial layout of the b tuple
+in memory.
+
+![E7](./images/07.png)
+
