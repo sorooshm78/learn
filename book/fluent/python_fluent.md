@@ -503,6 +503,7 @@ True
 
 ![E6](./images/06.png)
 
+
 ## List Comprehensions and Generator Expressions
 
 A quick way to build a sequence is using a list comprehension (if the target is a list)
@@ -899,3 +900,26 @@ for country, _ in traveler_ids:
 # country -> BRA
 # value of _ -> CE342567
 ```
+
+### Tuples as Immutable Lists
+The Python interpreter and standard library make extensive use of tuples as immuta‐
+ble lists, and so should you. This brings two key benefits:
+
+* Clarity
+
+When you see a tuple in code, you know its length will never change.
+
+* Performance
+
+A tuple uses less memory than a list of the same length, and it allows Python
+to do some optimizations.
+
+However, be aware that the immutability of a tuple only applies to the references
+contained in it. References in a tuple cannot be deleted or replaced. But if one of
+those references points to a mutable object, and that object is changed, then the value
+of the tuple changes. The next snippet illustrates this point by creating two tuples—a
+and b—which are initially equal. Figure 2-4 represents the initial layout of the b tuple
+in memory.
+
+![E7](./images/07.png)
+
