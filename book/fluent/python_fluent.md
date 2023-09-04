@@ -1130,3 +1130,139 @@ able, but it can appear in any position:
 ([0, 1], 2, 3, 4)
 ```
 
+### Unpacking with * in Function Calls and Sequence Literals
+
+In function calls, we can use * multiple times:
+
+```
+>>> def fun(a, b, c, d, *rest):
+...
+return a, b, c, d, rest
+...
+>>> fun(*[1, 2], 3, *range(4, 7))
+(1, 2, 3, 4, (5, 6))
+```
+
+The * can also be used when defining list, tuple, or set literals, as shown in these
+examples from “What’s New In Python 3.5”:
+
+```
+>>> *range(4), 4
+(0, 1, 2, 3, 4)
+
+>>> *range(4), -10
+(0, 1, 2, 3, -10)
+
+>>> (*range(4), -10)
+(0, 1, 2, 3, -10)
+
+>>> [*range(4), 4]
+[0, 1, 2, 3, 4]
+
+>>> {*range(4), 4, *(5, 6, 7)}
+{0, 1, 2, 3, 4, 5, 6, 7}
+```
+
+PEP 448 introduced similar new syntax for **, which we’ll see in “Unpacking Map‐
+pings” on page 80.
+Finally, a powerful feature of tuple unpacking is that it works with nested structures.
+
+## Nested Unpacking
+
+The target of an unpacking can use nesting, e.g., (a, b, (c, d)). Python will do the
+right thing if the value has the same nesting structure
+
+```
+metro_areas = [
+    ('Tokyo', 'JP', 36.933, (35.689722, 139.691667)),
+    ('Delhi NCR', 'IN', 21.935, (28.613889, 77.208889)),
+    ('Mexico City', 'MX', 20.142, (19.433333, -99.133333)),
+    ('New York-Newark', 'US', 20.104, (40.808611, -74.020386)),
+    ('São Paulo', 'BR', 19.649, (-23.547778, -46.635833)),
+]
+
+def main():
+    print(f'{"":15} | {"latitude":>9} | {"longitude":>9}')
+    for name, _, _, (lat, lon) in metro_areas:
+        if lon <= 0:
+            print(f'{name:15} | {lat:9.4f} | {lon:9.4f}')
+
+if __name__ == '__main__':
+    main()
+```
+
+The output of Example 2-8 is:
+
+```
+                | latitude | longitude
+Mexico City     |19.4333   | -99.1333
+New York-Newark | 40.8086  | -74.0204
+São Paulo       |-23.5478  | -46.6358
+```
+
+The target of an unpacking assignment can also be a list, but good use cases are rare.
+Here is the only one I know: if you have a database query that returns a single record
+(e.g., the SQL code has a LIMIT 1 clause), then you can unpack and at the same time
+make sure there’s only one result with this code:
+
+```
+>>> [record] = query_returning_single_row()
+```
+
+If the record has only one field, you can get it directly, like this:
+
+```
+>>> [[field]] = query_returning_single_row_with_single_field()
+```
+
+Both of these could be written with tuples, but don’t forget the syntax quirk that
+single-item tuples must be written with a trailing comma. So the first target would be
+(record,) and the second ((field,),). In both cases you get a silent bug if you forget
+
+
+```
+def return_single_list():
+    return [1]
+
+[item] = return_single_list()
+>>> item
+1
+```
+
+```
+def return_single_list():
+    return [1]
+
+[item1, item2] = return_single_list()
+
+Traceback (most recent call last):
+    File "<stdin>", line 1, in <module>
+ValueError: not enough values to unpack (expected 2, got 1)
+```
+
+```
+def return_single_list():
+    return [1, 2]
+
+[item1, item2] = return_single_list()
+
+>>> item1
+1
+
+>>> item2
+2
+```
+
+```
+def return_list():
+    return [[1]]
+
+[item] = return_list() 
+>>> item
+[1]
+
+[[new_item]] = return_list()
+>>> new_item
+1
+```
+
