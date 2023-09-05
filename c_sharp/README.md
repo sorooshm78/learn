@@ -85,3 +85,30 @@ var newName2 = "soroush";
 ```
 var name; // Error
 ```
+
+# Comment
+
+Single Line 
+```
+// single comment
+comment -> Ctrl + k + c
+uncomment -> Ctrl + k + u 
+```
+
+
+# And, Or Operators
+```
+int number = 18
+isValid = number < 20 || number > 30 
+// number < 20 is true and number > 30 not check for optimized
+```
+
+```
+int number = 18
+isValid = number > 20 && number < 30 
+// number > 20 is false and number < 30 not check for optimized
+```
+
+/**This optimized called short-circutting**/
+
+

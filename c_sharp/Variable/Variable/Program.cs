@@ -14,3 +14,7 @@ string newName1 = "soroush";
 // Impilicitly Typed Variable
 var newNumber2 = 100;
 var newName2 = "soroush";
+
+
+string userInput = Console.ReadLine();
+Console.WriteLine(userInput);   
