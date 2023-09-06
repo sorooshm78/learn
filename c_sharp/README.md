@@ -112,3 +112,62 @@ isValid = number > 20 && number < 30
 /**This optimized called short-circutting**/
 
 
+## Local Variable Scope
+Code-Block Level Scope
+A variable declared within a loop or any block within brackets has the code-block level scope. A variable declared within a loop or code block cannot be accessed outside of it, whereas a variable declared outside of the loop can be accessible within the loop.
+
+```
+class Program
+{
+    static void Main(string[] args)
+    {
+        int count = 0;
+       
+        for (int i = 0; i < 5; i++)
+            Console.WriteLine(i);
+        
+        //Console.WriteLine(i); //can't access i because it has loop level scope
+        
+        if (count == 0)
+        {
+            count++; //can access method variables
+
+            int x = 10; //declared block level variable
+        }
+        
+        //Console.WriteLine(x); //can't access block level variable
+    }
+}
+```
+
+In the above example, a variable i declared within a for loop. So, it can only be accessed within the for loop block and cannot be accessed outside for loop. In the same way, x is declared within the if block, so it can only be accessed in that block but not outside of it.
+
+A variable must be declared outside of the code block to make it accessible to outside code.
+
+```
+int a = 1;
+
+if(true)
+{
+  var b = a + 1; // accessing a from outer scope
+  int a = 2; // conflicts
+}
+```
+
+Arg vs Param
+```
+void PrintHellow(string name) // name is param
+{
+    Console.WriteLine(name);
+}
+
+PrintHellow("sm") // "sm" is arg
+```
+
+## Type Casting
+```
+string str_num = "10";
+int num = int.Parse(str_num);
+Console.WriteLine(num++);
+// 15
+```
