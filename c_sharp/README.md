@@ -59,6 +59,16 @@ char - stores single characters, such as 'a' or 'B'. Char values are surrounded 
 string - stores text, such as "Hello World". String values are surrounded by double quotes
 bool - stores values with two states: true or false
 
+## C# Keywords
+A keyword is a reserved word. You cannot use it as a variable name, constant name etc.
+
+```
+int class // class is reserved
+
+int @class // not error
+```
+
+
 ## Declaring (Creating) Variables
 To create a variable, you must specify the type and assign it a value:
 
@@ -170,4 +180,24 @@ string str_num = "10";
 int num = int.Parse(str_num);
 Console.WriteLine(num++);
 // 15
+```
+
+## String Interpolation
+```
+int number1 = 10
+int number2 = 1
+int sum = number1 + number2
+
+Console.WriteLine($"{number1} + {number2} = {sum}");
+// 10 + 1 = 11
+```
+
+# Char | String 
+```
+string str = "string"; // " -> String
+char ch = 'A'; // ' -> Char
+```
+
+num++ vs ++num
+```
 ```
