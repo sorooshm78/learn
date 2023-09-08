@@ -198,6 +198,22 @@ string str = "string"; // " -> String
 char ch = 'A'; // ' -> Char
 ```
 
-num++ vs ++num
+
+### Postfix increment operator
+The result of x++ is the value of x before the operation, as the following example shows:
 ```
+int i = 3;
+Console.WriteLine(i);   // output: 3
+Console.WriteLine(i++); // output: 3
+Console.WriteLine(i);   // output: 4
 ```
+
+### Prefix increment operator
+The result of ++x is the value of x after the operation, as the following example shows:
+```
+int a = 1;
+Console.WriteLine(a);   // output: 1
+Console.WriteLine(++a); // output: 2
+Console.WriteLine(a);   // output: 2
+```
+
