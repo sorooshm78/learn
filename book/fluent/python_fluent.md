@@ -1266,3 +1266,39 @@ def return_list():
 1
 ```
 
+## Pattern Matching with Sequences
+Here is a first example of match/case handling sequences. Imagine you are designing
+a robot that accepts commands sent as sequences of words and numbers, like BEEPER
+440 3. After splitting into parts and parsing the numbers, you’d have a message like
+['BEEPER', 440, 3]. You could use a method like this to handle such messages:
+Example 2-9. Method from an imaginary Robot class
+
+```
+def handle_command(self, message):
+    match message:
+        case ['BEEPER', frequency, times]:
+            self.beep(times, frequency)
+        case ['NECK', angle]:
+            self.rotate_neck(angle)
+        case ['LED', ident, intensity]:
+            self.leds[ident].set_brightness(ident, intensity)
+        case ['LED', ident, red, green, blue]:
+            self.leds[ident].set_color(ident, red, green, blue)
+        case _:
+            raise InvalidCommand(message)
+```
+1. The expression after the match keyword is the subject. 
+
+2. The subject is the data that Python will try to match to the patterns in each case clause.
+
+3. This pattern matches any subject that is a sequence with three items. The first
+item must be the string 'BEEPER'. The second and third item can be anything,
+and they will be bound to the variables frequency and times, in that order.
+
+4. This matches any subject with two items, the first being 'NECK'.
+
+5. This will match a subject with three items starting with 'LED'. If the number of
+items does not match, Python proceeds to the next case. Another sequence pattern starting with 'LED', now with five items—including the 'LED' constant.
+
+6. This is the default case. It will match any subject that did not match a previous
+pattern. The _ variable is special, as we’ll soon see.
