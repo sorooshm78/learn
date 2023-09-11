@@ -1302,3 +1302,116 @@ items does not match, Python proceeds to the next case. Another sequence pattern
 
 6. This is the default case. It will match any subject that did not match a previous
 pattern. The _ variable is special, as we’ll soon see.
+
+On the surface, match/case may look like the switch/case statement from the C lan‐
+guage—but that’s only half the story.4 One key improvement of match over switch is
+destructuring—a more advanced form of unpacking. Destructuring is a new word in
+the Python vocabulary, but it is commonly used in the documentation of languages
+that support pattern matching—like Scala and Elixir.
+As a first example of destructuring, Example 2-10 shows part of Example 2-8 rewrit‐
+ten with match/case.
+Example 2-10. Destructuring nested tuples—requires Python ≥ 3.10
+
+```
+metro_areas = [
+    ("Tokyo", "JP", 36.933, (35.689722, 139.691667)),
+    ("Delhi NCR", "IN", 21.935, (28.613889, 77.208889)),
+    ("Mexico City", "MX", 20.142, (19.433333, -99.133333)),
+    ("New York-Newark", "US", 20.104, (40.808611, -74.020386)),
+    ("São Paulo", "BR", 19.649, (-23.547778, -46.635833)),
+]
+
+
+print(f'{"":15} | {"latitude":>9} | {"longitude":>9}')
+for record in metro_areas:
+    match record:
+        case [name as ss, _, _, (lat, lon)] if lon <= 0:
+            print(f"{name:15} | {lat:9.4f} | {lon:9.4f}")
+```
+
+The subject of this match is record— i.e., each of the tuples in metro_areas.
+A case clause has two parts: a pattern and an optional guard with the if keyword.
+In general, a sequence pattern matches the subject if:
+1. The subject is a sequence and;
+2. The subject and the pattern have the same number of items and;
+3. Each corresponding item matches, including nested items.
+
+For example, the pattern [name, _, _, (lat, lon)] in Example 2-10 matches a
+sequence with four items, and the last item must be a two-item sequence.
+Sequence patterns may be written as tuples or lists or any combination of nested
+tuples and lists, but it makes no difference which syntax you use: in a sequence pat‐
+tern, square brackets and parentheses mean the same thing. I wrote the pattern as a
+list with a nested 2-tuple just to avoid repeating brackets or parentheses in
+Example 2-10.
+A sequence pattern can match instances of most actual or virtual subclasses of collec
+tions.abc.Sequence, with the exception of str, bytes, and bytearray.
+
+Instances of str, bytes, and bytearray are not handled as sequen‐
+ces in the context of match/case. A match subject of one of those
+types is treated as an “atomic” value—like the integer 987 is treated
+as one value, not a sequence of digits. Treating those three types as
+sequences could cause bugs due to unintended matches. If you
+want to treat an object of those types as a sequence subject, convert
+it in the match clause. For example, see tuple(phone) in the
+following:
+
+```
+match tuple(phone):
+    case ['1', *rest]: # North America and Caribbean
+        ...
+    case ['2', *rest]: # Africa and some territories
+        ...
+    case ['3' | '4', *rest]: # Europe
+        ...
+```
+
+In the standard library, these types are compatible with sequence patterns:
+* list
+* tuple
+* memoryview
+* range
+* array.array
+* collections.deque -> (double queue)
+
+
+Unlike unpacking, patterns don’t destructure iterables that are not sequences (such as iterators).
+The _ symbol is special in patterns: it matches any single item in that position, but it
+is never bound to the value of the matched item. Also, the _ is the only variable that
+can appear more than once in a pattern.
+
+```
+metro_areas = [
+    ("Tokyo", "JP", 36.933, (35.689722, 139.691667)),
+    ("Delhi NCR", "IN", 21.935, (28.613889, 77.208889)),
+    ("Mexico City", "MX", 20.142, (19.433333, -99.133333)),
+    ("New York-Newark", "US", 20.104, (40.808611, -74.020386)),
+    ("São Paulo", "BR", 19.649, (-23.547778, -46.635833)),
+]
+
+for record in metro_areas:
+    match record:
+        case [name as ss, _, _, (lat, lon)] if lon <= 0:
+            print(f"dummy var -> {_}")
+
+# Traceback (most recent call last):
+#   File "/home/sm/src/darya/temp/main.py", line 14, in <module>
+#     print(f"dummy var -> {_}")
+# NameError: name '_' is not defined
+```
+
+
+You can bind any part of a pattern with a variable using the as keyword:
+case [name, _, _, (lat, lon) as coord]:
+Given the subject ['Shanghai', 'CN', 24.9, (31.1, 121.3)], the preceding pattern will match, and set the following variables:
+
+```
+['Shanghai', 'CN', 24.9, (31.1, 121.3)]
+
+case [name, _, _, (lat, lon) as coord]
+
+# name : 'Shanghai'
+# lat : 31.1
+# lon : 121.3
+# coord : (31.1, 121.3)
+```
+
