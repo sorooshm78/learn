@@ -324,3 +324,116 @@ foreach (string i in cars)
   Console.WriteLine(i);
 }
 ```
+
+## C# List
+List<T> is a class that contains multiple objects of the same data type that can be accessed using an index. For example,
+```
+// list containing integer values 
+List<int> number = new List<int>() { 1, 2, 3 };
+```
+Here, number is a List containing integer values (1, 2 and 3).
+
+## out C#
+The out parameter in C# is used to pass arguments to methods by reference. It differs from the ref keyword in that it does not require parameter variables to be initialized before they are passed to a method.
+The out keyword must be explicitly declared in the method’s definition​ as well as in the calling method.
+
+```
+Declaration of out Parameter:  
+
+// No need to initialize 
+// the variable here
+data_type variable_name;
+
+Method_Name(out variable_name);
+
+// you can also convert both above two 
+// lines of codes as follows from
+//  C# 7.0 onwards
+Method_Name(out data_type variable_name);
+```
+
+```
+void AddOne(int number)
+{
+    number += 1;
+}
+
+int number = 0;
+
+Console.WriteLine($"number is {number}"); // 0
+// pass by value
+AddOne(number);
+Console.WriteLine($"number is {number}"); // 0
+```
+
+```
+void AddOne(out int number)
+{
+    number = 0; 
+    number += 1;
+}
+
+
+// int number;
+// AddOne(out number)
+// or
+// AddOne(out int number);
+
+// pass by refrence
+AddOne(out int number);
+Console.WriteLine($"number is {number}"); // 1
+```
+
+The out is a keyword in C# which is used for the passing the arguments to methods as a reference type. It is generally used when a method returns multiple values.
+
+* It is similar to ref keyword. But the main difference between ref and out keyword is that ref needs that the variable must be initialized before it passed to the method. But out parameter doesn’t require the variables to be initialized before it passed to the method. But before it returns a value to the calling method, the variable must be initialized in the called method.
+
+```
+void AddOne(out int number)
+{
+    number = 0; 
+    number += 1;
+}
+
+
+// int number;
+// AddOne(out number)
+// or
+// AddOne(out int number);
+
+int number = -1;
+Console.WriteLine($"number is {number}"); // -1
+// pass by refrence
+AddOne(out number);
+Console.WriteLine($"number is {number}"); // 1
+```
+
+```
+class ReferenceTypeExample
+{
+  static void Enroll(out Student student)
+  {
+    //We need to initialize the variable in the method before we can do anything
+    student = new Student();
+    student.Enrolled = false;
+  }
+
+  static void Main()
+  {
+    Student student;
+
+    Enroll(out student); // student will be equal to the value in Enroll. Name will be null and Enrolled will be false.
+  }
+}
+
+public class Student {
+  public string Name {get;set;}
+  public bool Enrolled {get;set;}
+}
+```
+
+* For using out keyword as a parameter both the method definition and calling method must use the out keyword explicitly.
+
+## ref C#
+
+## in C#
