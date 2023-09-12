@@ -435,5 +435,102 @@ public class Student {
 * For using out keyword as a parameter both the method definition and calling method must use the out keyword explicitly.
 
 ## ref C#
+The ref keyword in C# is a powerful tool that allows developers to pass arguments by reference, rather than by value. By using the ref keyword, developers can modify the original value of a variable, rather than just a copy of that value. This can be especially useful when working with large or complex data structures, as it can help to reduce memory usage and improve performance.
+
+### Basic Definition
+The ref keyword in C# is used to pass arguments to methods by reference. When a variable is passed by reference, the method can modify the value of the variable and the changes will be reflected in the calling code. This is in contrast to passing arguments by value, where a copy of the variable’s value is passed to the method, and any changes made to the variable in the method are not reflected in the calling code.
+
+### Ref vs Out Keyword
+The ref keyword is often confused with the out keyword, which is also used to pass arguments by reference. The main difference between the two is that with ref, the variable must be initialized before it is passed to the method, whereas with out, the variable does not need to be initialized before it is passed. In addition, with out, the method is required to assign a value to the variable before it returns, whereas with ref, the value of the variable can be modified without being assigned a new value.
+
+### Ref vs In Keyword
+The in keyword is another keyword that is used to pass arguments to methods, but it is used to pass arguments by read-only reference. This means that the method cannot modify the value of the variable, but it can read its value. The in keyword is useful when you want to pass large objects to a method without incurring the overhead of copying the object.
+
+When using the ref keyword, it is important to keep in mind that the method can modify the value of the variable, which can lead to unexpected behavior if not used carefully. It is also important to ensure that the variable is initialized before it is passed to the method, to avoid null reference exceptions.
+
+In summary, the ref keyword is a powerful feature of C# that allows methods to modify the value of variables in the calling code. It is important to use it carefully, and to understand the differences between ref, out, and in keywords.
 
 ## in C#
+The in modifier is most often used for performance reasons and was introduced in C# 7.2. The motivation of in is to be used with a struct to improve performance by declaring that the value will not be modified. When using with reference types, it only prevents you from assigning a new reference.
+
+The in keyword in C# is used to specify that a method parameter is passed by reference, but the called method cannot modify the argument. This is useful for parameters that are not modified by the called method, but must be passed by reference in order for the calling method to access the results.
+
+C# 7 introduced the in modifier. It got the name by being the opposite of out keyword. It makes the reference (alias) read only; and the caller does have to initialize the value.
+
+```
+void DoSomeTask(in Employee emp)
+{
+  //emp can't be altered here.
+}
+```
+
+## The TryParse() method
+TryParse() converts the string data type into another data type. It returns 0 if the conversion fails. TryParse() is a safer approach because it does not terminate the execution of the program.
+
+### Syntax
+Use the following syntax to convert string into any variable.
+
+```
+data_type.TryParse(string, out output_variable);
+```
+
+### Parameters
+
+The TryParse() method receives two parameters. The first parameter is the string to be converted. The second parameter is the variable to store the converted value. The out keyword is used before the second parameter.
+
+### Return value
+
+The TryParse() method returns True or False value based on successful or unsuccessful conversion.
+
+### Example
+```
+string textExample = "Seven";
+Console.WriteLine(textExample);
+
+int textExampleInt;
+int.TryParse(textExample, out textExampleInt);
+// "Seven" cannot be converted to int, hence textExampleInt store 0 value.
+Console.WriteLine(textExampleInt);
+
+string textExample2 = "5.5";
+Console.WriteLine(textExample2);
+
+float textExampleFloat;
+float.TryParse(textExample2, out textExampleFloat);
+// "5.5" will be converted to float value 5.5 and stored in textExampleFloat
+Console.WriteLine(textExampleFloat);
+```
+
+## C# int.TryParse Method
+Convert a string representation of number to an integer, using the int.TryParse() method in C#. If the string cannot be converted, then the int.TryParse() method returns false i.e. a Boolean value.
+
+Let’s say you have a string representation of a number.
+
+```
+string myStr = "12";
+```
+
+Now to convert it to an integer, use the int.TryParse(). It will get converted and will return True.
+
+```
+int.TryParse(myStr, out a);
+```
+
+```
+int number;
+string myStr = "12";
+isConvertToNumber = int.TryParse(myStr, out a);
+if (isConvertToNumber)
+{
+  Console.WriteLine("number " + number);
+}
+```
+
+If the string can not be converted to an integer, then
+```
+int.Parse() will throw an exception
+int.TryParse() will return false (but not throw an exception)
+```
+
+
+

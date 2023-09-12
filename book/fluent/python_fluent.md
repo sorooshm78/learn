@@ -1390,15 +1390,14 @@ metro_areas = [
 
 for record in metro_areas:
     match record:
-        case [name as ss, _, _, (lat, lon)] if lon <= 0:
-            print(f"dummy var -> {_}")
+        case [name as alias_name, _, _, (lat, lon)] if lon <= 0:
+            print(f"dummy var -> {_} | name {alias_name}")
 
 # Traceback (most recent call last):
 #   File "/home/sm/src/darya/temp/main.py", line 14, in <module>
 #     print(f"dummy var -> {_}")
 # NameError: name '_' is not defined
 ```
-
 
 You can bind any part of a pattern with a variable using the as keyword:
 case [name, _, _, (lat, lon) as coord]:
@@ -1414,4 +1413,48 @@ case [name, _, _, (lat, lon) as coord]
 # lon : 121.3
 # coord : (31.1, 121.3)
 ```
+
+We can make patterns more specific by adding type information. For example, the
+following pattern matches the same nested sequence structure as the previous exam‐
+ple, but the first item must be an instance of str, and both items in the 2-tuple must
+be instances of float:
+
+```
+case [str(name), _, _, (float(lat), float(lon))]:
+```
+
+The expressions str(name) and float(lat) look like constructor
+calls, which we’d use to convert name and lat to str and float.
+But in the context of a pattern, that syntax performs a runtime type
+check: the preceding pattern will match a four-item sequence in
+which item 0 must be a str, and item 3 must be a pair of floats.
+Additionally, the str in item 0 will be bound to the name variable,
+and the floats in item 3 will be bound to lat and lon, respectively.
+So, although str(name) borrows the syntax of a constructor call,
+the semantics are completely different in the context of a pattern.
+Using arbitrary classes in patterns is covered in “Pattern Matching
+Class Instances” on page 192.
+
+On the other hand, if we want to match any subject sequence starting with a str, and
+ending with a nested sequence of two floats, we can write:
+
+```
+case [str(name), *_, (float(lat), float(lon))]:
+```
+
+The *_ matches any number of items, without binding them to a variable. Using
+*extra instead of *_ would bind the items to extra as a list with 0 or more items.
+The optional guard clause starting with if is evaluated only if the pattern matches,
+and can reference variables bound in the pattern, as in Example 2-10:
+
+```
+match record:
+    case [name, _, _, (lat, lon)] if lon <= 0:
+        print(f'{name:15} | {lat:9.4f} | {lon:9.4f}')
+```
+
+The nested block with the print statement runs only if the pattern matches and the
+guard expression is truthy.
+
+
 
