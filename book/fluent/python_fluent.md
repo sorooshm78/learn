@@ -1457,4 +1457,62 @@ The nested block with the print statement runs only if the pattern matches and t
 guard expression is truthy.
 
 
+## Pattern Matching Sequences in an Interpreter
+```
+def evaluate(exp: Expression, env: Environment) -> Any:
+    match exp:
+        case ['quote', x]:
+            return x
+        case ['if', test, consequence, alternative]:
+            if evaluate(test, env):
+                return evaluate(consequence, env)
+            else:
+                return evaluate(alternative, env)
+        case ['lambda', [*parms], *body] if body:
+            return Procedure(parms, body, env)
+        case ['define', Symbol() as name, value_exp]:
+            env[name] = evaluate(value_exp, env)
+```
+* Match if subject is a two-item sequence starting with 'quote'.
 
+* Match if subject is a four-item sequence starting with 'if'.
+
+* Match if subject is a sequence of three or more items starting with 'lambda'. The guard ensures that body is not empty.
+
+* Match if subject is a three-item sequence starting with 'define', followed by an instance of Symbol.
+
+* It is good practice to have a catch-all case. In this example, if exp doesn’t match any of the patterns, the expression is malformed, and I raise SyntaxError.
+
+Without a catch-all, the whole match statement does nothing when a subject does not
+match any case—and this can be a silent failure.
+
+Norvig deliberately avoided error checking in lis.py to keep the code easy to under‐
+stand. With pattern matching, we can add more checks and still keep it readable. For
+example, in the 'define' pattern, the original code does not ensure that name is an
+instance of Symbol—that would require an if block, an isinstance call, and more
+code. Example 2-12 is shorter and safer than Example 2-11.
+
+```
+class A:
+    pass
+
+
+class B:
+    pass
+
+
+persons = [
+    ("ali", A()),
+    ("goli", B()),
+    ("ahmad", "adad"),
+    ("soroush", A()),
+]
+
+for person in persons:
+    match person:
+        case [name, A() as a_instance]:
+            print(f"{name} -> {a_instance}")
+
+## ali -> <__main__.A object at 0x7fab82e57f40>
+## soroush -> <__main__.A object at 0x7fab82e57ee0>
+```
