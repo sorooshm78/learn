@@ -1516,3 +1516,102 @@ for person in persons:
 ## ali -> <__main__.A object at 0x7fab82e57f40>
 ## soroush -> <__main__.A object at 0x7fab82e57ee0>
 ```
+
+## Ellipses in Python?
+In Python, the Ellipsis or Ellipsis literal ... (three dots) is a built-in singleton object representing an infinite or unspecified number of arguments. It is a constant and does not have any associated methods. You can use this object in your code without importing it simply by using the ... or Ellipsis term. Both of these expressions evaluate the same Ellipsis object in Python.
+
+```
+# Printing Ellipsis literal 
+print(...)
+
+# Printing Ellipsis 
+print(Ellipsis)
+```
+
+You can replace the pass keyword with Ellipsis literal (...) in Python. You can use Ellipsis literal (...) as a "no operation" placeholder for your code inside the function or class, which is not written as of now. The Ellipsis literal doesn't do anything.
+
+```
+def first_func():
+    ...
+    
+def second_func():
+    pass
+```
+
+
+### Meaning of Python Ellipses in Python Type Hints
+
+Another use of an Python Ellipses singleton object was introduced in Python 3.5 or above. Type hinting allows us to declare and use the types of variables, parameters, and return values. Generally, Ellipsis in type hinting provides only part of the type.
+
+Python Ellipses are used in specifying type hints using the typing module, such as Callable[…, str], or it can be used as the Tuple[int, ...] to help type hinting.
+
+Type hinting is a great way to specify the data types you expect in your code. For example, you may want a tuple with the same data type, which means only integers, but the total number of integers can be arbitrary. That’s when the Ellipsis object can come in convenient:
+
+```
+numbers: tuple[int, ...]
+```
+
+Using Python Ellipses literal (...) within a tuple type hint indicates that you expect all items to be the same type in the Tuple.
+
+### Ellipsis for Slicing in Numpy
+
+Numpy is the most valuable and convenient library for data science. It is used to create and handle multidimensional arrays. Using Ellipsis helps in handling multidimensional arrays in NumPy.
+
+Slicing in Numpy refers to extracting portions of elements for an array based on their indexes. You can also perform the slicing on a multidimensional array in NumPy.
+
+Suppose we have an array with 3∗43∗4 dimensions, and we want to extract the element from the first index from each row.
+
+Here's how you can do it with Ellipsis and normal slice notation:-
+
+```
+import numpy as np
+arr = np.array([[5,3,2,3],[4,8,2,6],[8,2,3,0]])
+print(arr)
+
+# Ellipsis literal
+print(f"Ellipsis literal output:- {arr[...,1]}.")
+
+# general slice notation
+print(f"general slice notation output:- {arr[:,1]}")
+
+# Python Ellipsis 
+print(f"Python Ellipsis output:- {arr[Ellipsis, 1]}")
+```
+
+Above, we have an array with 3∗43∗4 dimensions, and we're extracting elements from the first index using the Ellipsis literal, Slice notation, and Ellipsis method.
+
+Below you can see the output of the bottom of all three print statements is similar because all three ways of extracting elements are correct.
+
+
+```
+>>> def f(x, y):
+        return 10 * x + y
+
+>>> b = np.fromfunction(f, (5, 4), dtype=int)
+>>> b
+array([[ 0,  1,  2,  3],
+       [10, 11, 12, 13],
+       [20, 21, 22, 23],
+       [30, 31, 32, 33],
+       [40, 41, 42, 43]])
+
+>>> b[2, 3]
+23
+
+>>> b[0:5, 1]  # each row in the second column of b
+array([ 1, 11, 21, 31, 41])
+
+>>> b[:, 1]    # equivalent to the previous example
+array([ 1, 11, 21, 31, 41])
+
+>>> b[1:3, :]  # each column in the second and third row of b
+array([[10, 11, 12, 13],
+       [20, 21, 22, 23]])
+```
+
+When fewer indices are provided than the number of axes, the missing indices are considered complete slices:
+
+```
+>>> b[-1]   # the last row. Equivalent to b[-1, :]
+array([40, 41, 42, 43])
+```
