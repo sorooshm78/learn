@@ -97,3 +97,123 @@ def sum_ab(a: int | float, b: int | float) -> int | float:
     return a + b
 ```
 
+# Runtime Type Checking
+## pydantic
+Static type checkers don't help when dealing with data from external sources like the users of your application. That's where runtime type checkers come into play. One such tool is pydantic, which is used to validate data. It raises validation errors when the provided data does not match a type defined with a type hint.
+
+pydantic uses type casting to convert input data to force it to conform to the expected type.
+
+```
+$ pip install pydantic
+```
+
+It's actually quite simple to use. For example, let's define a Song class with a few attributes:
+
+```
+from datetime import date
+
+from pydantic import BaseModel
+
+
+class Song(BaseModel):
+    id: int
+    name: str
+    release: date
+    genres: list[str]#
+```
+
+Along with leveraging type hints for data validation, you can also add custom validators to ensure correctness of data beyond its type. Adding custom validation for an attribute is fairly easy. For example, to prevent genre duplications in the Song class, you can add validation like so:
+```
+from datetime import date
+
+from pydantic import BaseModel, field_validator
+
+
+class Song(BaseModel):
+    id: int
+    name: str
+    release: date
+    genres: list[str]
+
+    @field_validator('genres')
+    def no_duplicates_in_genre(cls, v):
+        if len(set(v)) != len(v):
+            raise ValueError(
+                'No duplicates allowed in genre.'
+            )
+        return v
+
+
+song = Song(
+    id=101,
+    name='Bohemian Rhapsody',
+    release='1975-10-31',
+    genres=[
+        'Hard Rock',
+        'Progressive Rock',
+        'Progressive Rock',
+    ]
+)
+print(song)
+# pydantic_core._pydantic_core.ValidationError: 1 validation error for Song
+# genres
+#   Value error, No duplicates allowed in genre. [type=value_error,
+#     input_value=['Hard Rock', 'Progressiv...ck', 'Progressive Rock'], input_type=list]
+#     For further information visit https://errors.pydantic.dev/2.5/v/value_error
+```
+
+So, the validation method, no_duplicates_in_genre, must be decorated with field_validator, which takes the attribute name as an argument. The validation method must be a class method since validation happens before the instance is created. For data that fails validation, it should raise a standard Python ValueError.
+
+You can also use validator methods to alter the value before validation occurs. To do so, use mode='before':
+
+```
+@field_validator('genres', mode='before')
+```
+
+For example, you can convert genres to lower case like so:
+
+```
+from datetime import date
+
+from pydantic import BaseModel, field_validator
+
+
+class Song(BaseModel):
+    id: int
+    name: str
+    release: date
+    genres: list[str]
+
+    @field_validator('genres', mode='before')
+    def to_lower_case(cls, v):
+        return [genre.lower() for genre in v]
+
+    @field_validator('genres')
+    def no_duplicates_in_genre(cls, v):
+        if len(set(v)) != len(v):
+            raise ValueError(
+                'No duplicates allowed in genre.'
+            )
+        return v
+
+
+song = Song(
+    id=101,
+    name='Bohemian Rhapsody',
+    release='1975-10-31',
+    genres=[
+        'Hard Rock',
+        'PrOgReSsIvE ROCK',
+        'Progressive Rock',
+    ]
+)
+print(song)
+# pydantic_core._pydantic_core.ValidationError: 1 validation error for Song
+# genres
+#   Value error, No duplicates allowed in genre.
+#     [type=value_error, input_value=['Hard Rock', 'PrOgReSsIv...CK', 'Progressive Rock'], input_type=list]
+#     For further information visit https://errors.pydantic.dev/2.5/v/value_error
+```
+to_lower_case converts every element in the genres list to lowercase. Because of mode='before', this method is called before pydantic validates the types. All genres are converted to lowercase and then validated with no_duplicates_in_genre.
+
+pydantic also offers more strict types like StrictStr and EmailStr to make your validations even better. Review Field Types from the docs for more on this.
