@@ -217,3 +217,74 @@ print(song)
 to_lower_case converts every element in the genres list to lowercase. Because of mode='before', this method is called before pydantic validates the types. All genres are converted to lowercase and then validated with no_duplicates_in_genre.
 
 pydantic also offers more strict types like StrictStr and EmailStr to make your validations even better. Review Field Types from the docs for more on this.
+
+
+# Duck Typing
+Another term that is often used when talking about Python is duck typing. This moniker comes from the phrase “if it walks like a duck and it quacks like a duck, then it must be a duck” (or any of its variations).
+
+Duck typing is a concept related to dynamic typing, where the type or the class of an object is less important than the methods it defines. Using duck typing you do not check types at all. Instead you check for the presence of a given method or attribute.
+
+As an example, you can call len() on any Python object that defines a .__len__() method:
+
+```
+>>> class TheHobbit:
+...     def __len__(self):
+...         return 95022
+...
+>>> the_hobbit = TheHobbit()
+>>> len(the_hobbit)
+95022
+```
+
+Note that the call to len() gives the return value of the .__len__() method. In fact, the implementation of len() is essentially equivalent to the following:
+
+```
+def len(obj):
+    return obj.__len__()
+```
+
+In order to call len(obj), the only real constraint on obj is that it must define a .__len__() method. Otherwise, the object can be of types as different as str, list, dict, or TheHobbit.
+
+Duck typing is somewhat supported when doing static type checking of Python code, using structural subtyping. You’ll learn more about duck typing later.
+
+It’s time for our first type hints! To add information about types to the function, you simply annotate its arguments and return value as follows:
+
+```
+def headline(text: str, align: bool = True) -> str:
+    ...
+```
+
+The text: str syntax says that the text argument should be of type str. Similarly, the optional align argument should have type bool with the default value True. Finally, the -> str notation specifies that headline() will return a string
+
+In terms of style, PEP 8 recommends the following:
+
+* Use normal rules for colons, that is, no space before and one space after a colon: text: str.
+* Use spaces around the = sign when combining an argument annotation with a default value: align: bool = True.
+* Use spaces around the -> arrow: def headline(...) -> str.
+
+Adding type hints like this has no runtime effect: they are only hints and are not enforced on their own. For instance, if we use a wrong type for the (admittedly badly named) align argument, the code still runs without any problems or warnings:
+
+```
+>>> print(headline("python type checking", align="left"))
+Python Type Checking
+--------------------
+```
+
+The most common tool for doing type checking is Mypy though. You’ll get a short introduction to Mypy in a moment, while you can learn much more about how it works later.
+
+If you don’t already have Mypy on your system, you can install it using pip:
+
+```
+$ pip install mypy
+```
+
+This is essentially the same code you saw earlier: the definition of headline() and two examples that are using it.
+
+Now run Mypy on this code:
+
+```
+$ mypy headlines.py
+headlines.py:10: error: Argument "align" to "headline" has incompatible
+                        type "str"; expected "bool"
+```
+
