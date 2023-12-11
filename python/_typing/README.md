@@ -288,3 +288,102 @@ headlines.py:10: error: Argument "align" to "headline" has incompatible
                         type "str"; expected "bool"
 ```
 
+# Annotations
+Annotations were introduced in Python 3.0, originally without any specific purpose. They were simply a way to associate arbitrary expressions to function arguments and return values.
+
+Years later, PEP 484 defined how to add type hints to your Python code, based off work that Jukka Lehtosalo had done on his Ph.D. project—Mypy. The main way to add type hints is using annotations. As type checking is becoming more and more common, this also means that annotations should mainly be reserved for type hints.
+
+The next sections explain how annotations work in the context of type hints.
+
+# Function Annotations
+For functions, you can annotate arguments and the return value. This is done as follows:
+
+```
+def func(arg: arg_type, optarg: arg_type = default) -> return_type:
+```
+
+For arguments the syntax is argument: annotation, while the return type is annotated using -> annotation. Note that the annotation must be a valid Python expression.
+
+The following simple example adds annotations to a function that calculates the circumference of a circle:
+
+```
+import math
+
+def circumference(radius: float) -> float:
+    return 2 * math.pi * radius
+```
+
+When running the code, you can also inspect the annotations. They are stored in a special .__annotations__ attribute on the function:
+
+```
+>>> circumference(1.23)
+7.728317927830891
+
+>>> circumference.__annotations__
+{'radius': <class 'float'>, 'return': <class 'float'>}
+```
+
+Sometimes you might be confused by how Mypy is interpreting your type hints. For those cases there are special Mypy expressions: reveal_type() and reveal_locals(). You can add these to your code before running Mypy, and Mypy will dutifully report which types it has inferred. As an example, save the following code to reveal.py:
+
+```
+# reveal.py
+
+import math
+reveal_type(math.pi)
+
+radius = 1
+circumference = 2 * math.pi * radius
+reveal_locals()
+```
+
+Next, run this code through Mypy:
+
+```
+$ mypy reveal.py
+reveal.py:4: error: Revealed type is 'builtins.float'
+
+reveal.py:8: error: Revealed local types are:
+reveal.py:8: error: circumference: builtins.float
+reveal.py:8: error: radius: builtins.int
+```
+
+Even without any annotations Mypy has correctly inferred the types of the built-in math.pi, as well as our local variables radius and circumference.
+
+If Mypy says that “Name ‘reveal_locals‘ is not defined” you might need to update your Mypy installation. The reveal_locals() expression is available in Mypy version 0.610 and later.
+
+Variable Annotations
+In the definition of circumference() in the previous section, you only annotated the arguments and the return value. You did not add any annotations inside the function body. More often than not, this is enough.
+
+However, sometimes the type checker needs help in figuring out the types of variables as well. Variable annotations were defined in PEP 526 and introduced in Python 3.6. The syntax is the same as for function argument annotations:
+
+```
+pi: float = 3.142
+
+def circumference(radius: float) -> float:
+    return 2 * pi * radius
+```
+
+The variable pi has been annotated with the float type hint.
+
+Annotations of variables are stored in the module level __annotations__ dictionary:
+
+```
+>>> circumference(1)
+6.284
+
+>>> __annotations__
+{'pi': <class 'float'>}
+```
+
+You’re allowed to annotate a variable without giving it a value. This adds the annotation to the __annotations__ dictionary, while the variable remains undefined:
+
+```
+>>> nothing: str
+>>> nothing
+NameError: name 'nothing' is not defined
+
+>>> __annotations__
+{'nothing': <class 'str'>}
+```
+
+Since no value was assigned to nothing, the name nothing is not yet defined.
