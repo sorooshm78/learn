@@ -387,3 +387,225 @@ NameError: name 'nothing' is not defined
 ```
 
 Since no value was assigned to nothing, the name nothing is not yet defined.
+
+# Variable Annotations
+In the definition of circumference() in the previous section, you only annotated the arguments and the return value. You did not add any annotations inside the function body. More often than not, this is enough.
+
+However, sometimes the type checker needs help in figuring out the types of variables as well. Variable annotations were defined in PEP 526 and introduced in Python 3.6. The syntax is the same as for function argument annotations:
+```
+pi: float = 3.142
+
+def circumference(radius: float) -> float:
+    return 2 * pi * radius
+```
+The variable pi has been annotated with the float type hint.
+
+Annotations of variables are stored in the module level __annotations__ dictionary:
+
+```
+>>> circumference(1)
+6.284
+
+>>> __annotations__
+{'pi': <class 'float'>}
+```
+
+You’re allowed to annotate a variable without giving it a value. This adds the annotation to the __annotations__ dictionary, while the variable remains undefined:
+
+```
+
+>>> nothing: str
+>>> nothing
+NameError: name 'nothing' is not defined
+```
+```
+>>> __annotations__
+{'nothing': <class 'str'>}
+```
+Since no value was assigned to nothing, the name nothing is not yet defined.
+
+With simple types like str, float, and bool, adding type hints is as easy as using the type itself:
+```
+>>> name: str = "Guido"
+>>> pi: float = 3.142
+>>> centered: bool = False
+```
+
+With composite types, you are allowed to do the same:
+```
+>>> names: list = ["Guido", "Jukka", "Ivan"]
+>>> version: tuple = (3, 7, 1)
+>>> options: dict = {"centered": False, "capitalize": True}
+```
+
+However, this does not really tell the full story. What will be the types of names[2], version[0], and options["centered"]? In this concrete case you can see that they are str, int, and bool, respectively. However, the type hints themselves give no information about this.
+
+Instead, you should use the special types defined in the typing module. These types add syntax for specifying the types of elements of composite types. You can write the following:
+
+```
+>>> from typing import Dict, List, Tuple
+
+>>> names: List[str] = ["Guido", "Jukka", "Ivan"]
+>>> version: Tuple[int, int, int] = (3, 7, 1)
+>>> options: Dict[str, bool] = {"centered": False, "capitalize": True}
+```
+
+The typing module contains many more composite types, including Counter, Deque, FrozenSet, NamedTuple, and Set. In addition, the module includes other kinds of types that you’ll see in later sections.
+
+Let’s return to the card game. A card is represented by a tuple of two strings. You can write this as Tuple[str, str], so the type of the deck of cards becomes List[Tuple[str, str]]. Therefore you can annotate create_deck() as follows:
+
+```
+def create_deck(shuffle: bool = False) -> List[Tuple[str, str]]:
+    """Create a new deck of 52 cards"""
+    deck = [(s, r) for r in RANKS for s in SUITS]
+    if shuffle:
+        random.shuffle(deck)
+    return deck
+```
+
+In addition to the return value, you’ve also added the bool type to the optional shuffle argument.
+
+In many cases your functions will expect some kind of /*sequence*/, and not really care whether it is a list or a tuple. In these cases you should use typing.Sequence when annotating the function argument:
+```
+from typing import List, Sequence
+
+def square(elems: Sequence[float]) -> List[float]:
+    return [x**2 for x in elems]
+```
+
+Using Sequence is an example of using duck typing. A Sequence is anything that supports len() and .__getitem__(), independent of its actual type.
+
+# Type Aliases
+The type hints might become quite oblique when working with nested types like the deck of cards. You may need to stare at List[Tuple[str, str]] a bit before figuring out that it matches our representation of a deck of cards.
+
+Now consider how you would annotate deal_hands():
+```
+def deal_hands(
+    deck: List[Tuple[str, str]]
+) -> Tuple[
+    List[Tuple[str, str]],
+    List[Tuple[str, str]],
+    List[Tuple[str, str]],
+    List[Tuple[str, str]],
+]:
+    """Deal the cards in the deck into four hands"""
+    return (deck[0::4], deck[1::4], deck[2::4], deck[3::4])
+```
+That’s just terrible!
+
+Recall that type annotations are regular Python expressions. That means that you can define your own type aliases by assigning them to new variables. You can for instance create Card and Deck type aliases:
+
+```
+from typing import List, Tuple
+
+Card = Tuple[str, str]
+Deck = List[Card]
+```
+Card can now be used in type hints or in the definition of new type aliases, like Deck in the example above.
+
+Using these aliases, the annotations of deal_hands() become much more readable:
+```
+def deal_hands(deck: Deck) -> Tuple[Deck, Deck, Deck, Deck]:
+    """Deal the cards in the deck into four hands"""
+    return (deck[0::4], deck[1::4], deck[2::4], deck[3::4])
+```
+Type aliases are great for making your code and its intent clearer. At the same time, these aliases can be inspected to see what they represent:
+
+```
+>>> from typing import List, Tuple
+>>> Card = Tuple[str, str]
+>>> Deck = List[Card]
+
+>>> Deck
+typing.List[typing.Tuple[str, str]]
+```
+
+Note that when printing Deck, it shows that it’s an alias for a list of 2-tuples of strings.
+
+# Functions Without Return Values
+You may know that functions without an explicit return still return None:
+```
+>>> def play(player_name):
+...     print(f"{player_name} plays")
+...
+
+>>> ret_val = play("Jacob")
+Jacob plays
+
+>>> print(ret_val)
+None
+```
+While such functions technically return something, that return value is not useful. You should add type hints saying as much by using None also as the return type:
+
+# play.py
+```
+def play(player_name: str) -> None:
+    print(f"{player_name} plays")
+
+ret_val = play("Filip")
+```
+The annotations help catch the kinds of subtle bugs where you are trying to use a meaningless return value. Mypy will give you a helpful warning:
+```
+$ mypy play.py
+play.py:6: error: "play" does not return a value
+```
+Note that being explicit about a function not returning anything is different from not adding a type hint about the return value:
+
+# play.py
+```
+def play(player_name: str):
+    print(f"{player_name} plays")
+
+ret_val = play("Henrik")
+```
+In this latter case Mypy has no information about the return value so it will not generate any warning:
+```
+$ mypy play.py
+Success: no issues found in 1 source file
+```
+As a more exotic case, note that you can also annotate functions that are never expected to return normally. This is done using NoReturn:
+
+```
+from typing import NoReturn
+
+def black_hole() -> NoReturn:
+    raise Exception("There is no going back ...")
+```
+
+Since black_hole() always raises an exception, it will never return properly.
+
+# The Any Type
+choose() works for both lists of names and lists of cards (and any other sequence for that matter). One way to add type hints for this would be the following:
+```
+import random
+from typing import Any, Sequence
+
+def choose(items: Sequence[Any]) -> Any:
+    return random.choice(items)
+```
+This means more or less what it says: items is a sequence that can contain items of any type and choose() will return one such item of any type. Unfortunately, this is not that useful. Consider the following example:
+```
+# choose.py
+
+import random
+from typing import Any, Sequence
+
+def choose(items: Sequence[Any]) -> Any:
+    return random.choice(items)
+
+names = ["Guido", "Jukka", "Ivan"]
+reveal_type(names)
+
+name = choose(names)
+reveal_type(name)
+```
+
+While Mypy will correctly infer that names is a list of strings, that information is lost after the call to choose() because of the use of the Any type:
+
+```
+$ mypy choose.py
+choose.py:10: error: Revealed type is 'builtins.list[builtins.str*]'
+choose.py:13: error: Revealed type is 'Any'
+```
+
+You’ll see a better way shortly. First though, let’s have a more theoretical look at the Python type system, and the special role Any plays.
