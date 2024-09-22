@@ -863,3 +863,430 @@ if (aud_med) {
 ```
 
 ![](./images/pjsip-media.jpg)
+
+
+# Low Level
+### **`pjsip_endpt_register_module` in Detail**
+
+In **PJSIP**, modules are the core building blocks for handling various types of SIP-related tasks such as transactions, message processing, transport layers, and application-level processing. Modules are typically registered to the **SIP endpoint**, which acts as the central entity managing SIP events.
+
+The function `pjsip_endpt_register_module` registers a module with the SIP endpoint so that the module can be involved in handling incoming and outgoing SIP messages.
+
+### **Function Signature:**
+
+```cpp
+pj_status_t pjsip_endpt_register_module(pjsip_endpoint *endpt, const pjsip_module *module);
+```
+
+- **`endpt`**: The SIP endpoint with which the module will be registered. This is generally obtained by calling `pjsua_get_pjsip_endpt()` when using **PJSUA**.
+- **`module`**: A pointer to a **pjsip_module** structure that defines the module's behavior, including callbacks to handle incoming requests, responses, and transactions.
+
+The function returns `PJ_SUCCESS` if the module is successfully registered.
+
+### **Structure of `pjsip_module`:**
+
+The `pjsip_module` structure defines the behavior of a module. Here's an example of the `pjsip_module` structure and its key fields:
+
+```cpp
+typedef struct pjsip_module {
+    pj_str_t  name;        // The name of the module.
+    pj_uint32_t id;        // Unique module ID (auto-assigned if set to -1).
+    pj_uint32_t priority;  // Priority of the module.
+    pj_bool_t (*on_rx_request)(pjsip_rx_data *rdata);  // Callback for incoming requests.
+    pj_bool_t (*on_rx_response)(pjsip_rx_data *rdata); // Callback for incoming responses.
+    pj_bool_t (*on_tx_request)(pjsip_tx_data *tdata);  // Callback for outgoing requests.
+    pj_bool_t (*on_tx_response)(pjsip_tx_data *tdata); // Callback for outgoing responses.
+} pjsip_module;
+```
+
+### **Important Fields:**
+- **`name`**: The name of the module. It is a string of `pj_str_t` type, which is a PJSIP-defined structure for strings.
+- **`id`**: The unique identifier for the module. If set to `-1`, PJSIP will auto-assign an ID.
+- **`priority`**: The priority of the module. Higher-priority modules will be processed before lower-priority ones.
+- **`on_rx_request`**: A callback function invoked when an incoming SIP request (like `INVITE`, `REGISTER`, `MESSAGE`, etc.) is received.
+- **`on_rx_response`**: A callback function invoked when an incoming SIP response is received.
+- **`on_tx_request`**: A callback function invoked when an outgoing SIP request is being transmitted.
+- **`on_tx_response`**: A callback function invoked when an outgoing SIP response is being transmitted.
+
+### **Basic Example Using `pjsip_endpt_register_module`**
+
+The following is an example that demonstrates how to register a simple module that intercepts incoming SIP messages (requests) and prints them.
+
+```cpp
+#include <pjsua-lib/pjsua.h>
+#include <iostream>
+
+// Callback for handling incoming SIP requests
+pj_bool_t on_rx_request(pjsip_rx_data *rdata) {
+    // Print the incoming SIP message
+    std::cout << "Received SIP message: " << std::endl;
+    std::cout << std::string(rdata->msg_info.msg_buf, rdata->msg_info.len) << std::endl;
+
+    // Respond with 200 OK (if needed)
+    pjsip_tx_data *tdata;
+    pjsip_endpt_create_response(pjsua_get_pjsip_endpt(), rdata, 200, NULL, &tdata);
+    pjsip_endpt_send_response(pjsua_get_pjsip_endpt(), rdata, tdata, NULL, NULL);
+
+    return PJ_TRUE; // Return PJ_TRUE to indicate that the message has been processed.
+}
+
+int main() {
+    pj_status_t status;
+
+    // Initialize PJSUA (PJSIP library)
+    status = pjsua_create();
+    if (status != PJ_SUCCESS) {
+        std::cerr << "Error creating PJSUA" << std::endl;
+        return 1;
+    }
+
+    // Configure PJSUA
+    pjsua_config cfg;
+    pjsua_config_default(&cfg);
+
+    // Set logging configuration
+    pjsua_logging_config log_cfg;
+    pjsua_logging_config_default(&log_cfg);
+    log_cfg.console_level = 4;
+
+    // Media configuration
+    pjsua_media_config media_cfg;
+    pjsua_media_config_default(&media_cfg);
+
+    // Initialize PJSUA
+    status = pjsua_init(&cfg, &log_cfg, &media_cfg);
+    if (status != PJ_SUCCESS) {
+        std::cerr << "Error initializing PJSUA" << std::endl;
+        return 1;
+    }
+
+    // Create transport (UDP)
+    pjsua_transport_config transport_cfg;
+    pjsua_transport_config_default(&transport_cfg);
+    transport_cfg.port = 5060;  // Default SIP port
+
+    status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transport_cfg, NULL);
+    if (status != PJ_SUCCESS) {
+        std::cerr << "Error creating transport" << std::endl;
+        return 1;
+    }
+
+    // Start PJSUA
+    status = pjsua_start();
+    if (status != PJ_SUCCESS) {
+        std::cerr << "Error starting PJSUA" << std::endl;
+        return 1;
+    }
+
+    // Define a module that intercepts incoming SIP requests
+    pjsip_module my_module = {
+        NULL, NULL, { "mod-sip-handler", 15 }, -1, 
+        PJSIP_MOD_PRIORITY_APPLICATION, NULL, NULL, 
+        &on_rx_request, NULL, NULL, NULL, NULL
+    };
+
+    // Register the module with PJSIP
+    status = pjsip_endpt_register_module(pjsua_get_pjsip_endpt(), &my_module);
+    if (status != PJ_SUCCESS) {
+        std::cerr << "Error registering module" << std::endl;
+        return 1;
+    }
+
+    std::cout << "PJSIP is now listening for SIP messages..." << std::endl;
+
+    // Keep the program running to handle incoming events
+    while (true) {
+        pj_time_val delay = { 0, 10 };
+        pjsua_handle_events(&delay);
+    }
+
+    // Clean up PJSUA before exiting
+    pjsua_destroy();
+    return 0;
+}
+```
+
+### **Explanation:**
+1. **`pjsip_module my_module`**: Defines a module named `"mod-sip-handler"` that has the `on_rx_request` callback. The module will intercept incoming SIP requests.
+2. **`pjsip_endpt_register_module(pjsua_get_pjsip_endpt(), &my_module)`**: Registers the module with the PJSIP endpoint, enabling it to process incoming SIP messages.
+3. **`on_rx_request`**: The callback function for processing incoming SIP requests. It prints the entire SIP message to the console and optionally responds with a `200 OK`.
+
+### **Processing Flow:**
+1. When an incoming SIP request (e.g., `INVITE`, `REGISTER`, `MESSAGE`) arrives, **PJSIP** invokes the `on_rx_request` callback of the registered module.
+2. The callback handles the request by printing the SIP message and optionally responding to the sender.
+3. The program runs an infinite loop using `pjsua_handle_events()` to keep processing incoming SIP messages and events.
+
+### **Practical Use Cases:**
+- **Call Processing**: You can intercept and process SIP `INVITE` messages for call management.
+- **Message Handling**: For handling SIP `MESSAGE` requests in messaging applications.
+- **Custom Logic**: You can add custom behavior (such as routing or logging) based on specific SIP requests.
+
+This modular approach enables extensibility and flexibility in handling SIP communication within **PJSIP** applications.
+
+Let me know if you need further clarification!
+
+
+The `pjsip_module my_module = {...};` structure is a definition of a **PJSIP module** that will be registered with the **PJSIP endpoint**. Each module in PJSIP defines specific functionality related to handling SIP messages or transactions. Here's a detailed breakdown of the initialization of `my_module`:
+
+### **Structure Breakdown**
+
+```cpp
+pjsip_module my_module = {
+    NULL, NULL, { "mod-sip-handler", 15 }, -1,
+    PJSIP_MOD_PRIORITY_APPLICATION, NULL, NULL,
+    &on_rx_request, NULL, NULL, NULL, NULL
+};
+```
+
+Each part of this structure corresponds to different fields in the **`pjsip_module`** structure, which controls how the module behaves.
+
+### **Field-by-Field Explanation**
+
+1. **`NULL`** (first position):
+   - **Type**: `pj_caching_pool *cpool`
+   - **Explanation**: This is an optional field for a **caching pool** pointer, typically used when a module needs memory pools for its internal operations. Since this module doesn’t use a caching pool, we set it to `NULL`.
+
+2. **`NULL`** (second position):
+   - **Type**: `pj_pool_t *pool`
+   - **Explanation**: This is an optional field for specifying a memory pool to be used by the module for its operations. This field is also set to `NULL` since we are not using a dedicated memory pool for the module.
+
+3. **`{ "mod-sip-handler", 15 }`**:
+   - **Type**: `pj_str_t name`
+   - **Explanation**: This defines the **name of the module**. The `pj_str_t` structure is a string type used in PJSIP, where the first parameter is the string value and the second parameter is its length. 
+   - **"mod-sip-handler"** is the name of this module, and `15` is the length of the string.
+
+4. **`-1`**:
+   - **Type**: `pj_uint32_t id`
+   - **Explanation**: This is the unique ID of the module. If set to `-1`, PJSIP will automatically assign a unique ID to the module. This is useful when you don’t need to manually manage module IDs.
+
+5. **`PJSIP_MOD_PRIORITY_APPLICATION`**:
+   - **Type**: `pj_uint32_t priority`
+   - **Explanation**: The **priority** of the module. Modules with higher priorities are executed before modules with lower priorities when processing SIP messages. 
+   - **`PJSIP_MOD_PRIORITY_APPLICATION`** is a predefined priority level used for application modules. This constant indicates that this module is intended to be used at the application layer.
+
+6. **`NULL` (third position)**:
+   - **Type**: `pj_bool_t (*load)()`
+   - **Explanation**: This is a pointer to a **load callback** function. This function will be called when the module is loaded or registered with the SIP endpoint. In this case, we don’t need any special initialization, so it is set to `NULL`.
+
+7. **`NULL` (fourth position)**:
+   - **Type**: `void (*start)()`
+   - **Explanation**: This is a pointer to a **start callback** function, which is called after the module is fully initialized and started. Since we don’t have a start process, it is set to `NULL`.
+
+8. **`&on_rx_request`**:
+   - **Type**: `pj_bool_t (*on_rx_request)(pjsip_rx_data *rdata)`
+   - **Explanation**: This is the **callback function** that will be called when the module receives an incoming SIP **request** (e.g., `INVITE`, `REGISTER`, `MESSAGE`). 
+   - The function **`on_rx_request`** is defined elsewhere in the code and will handle the SIP request by, for example, printing the request or responding to it. When an incoming SIP request is received, this function gets invoked with the **`rdata`** (received data) structure.
+
+9. **`NULL` (fifth position)**:
+   - **Type**: `pj_bool_t (*on_rx_response)(pjsip_rx_data *rdata)`
+   - **Explanation**: This is the callback for handling incoming **SIP responses** (such as responses to a previously sent request like `200 OK`, `404 Not Found`, etc.). Since we are not interested in responses in this module, it is set to `NULL`.
+
+10. **`NULL` (sixth position)**:
+    - **Type**: `pj_bool_t (*on_tx_request)(pjsip_tx_data *tdata)`
+    - **Explanation**: This is the callback for handling outgoing **SIP requests** (like `INVITE`, `REGISTER`, etc.). If you wanted to inspect or modify outgoing requests before they are sent, you could implement a function here. In this case, it is set to `NULL` because we are not modifying outgoing requests.
+
+11. **`NULL` (seventh position)**:
+    - **Type**: `pj_bool_t (*on_tx_response)(pjsip_tx_data *tdata)`
+    - **Explanation**: This is the callback for handling outgoing **SIP responses** (such as responses to incoming requests like `200 OK`, `404 Not Found`, etc.). If you wanted to inspect or modify outgoing responses, you could implement a function here. In this case, it is set to `NULL` because we are not modifying outgoing responses.
+
+12. **`NULL` (eighth position)**:
+    - **Type**: `void (*on_tsx_state)(pjsip_transaction *tsx, pjsip_event *event)`
+    - **Explanation**: This is the callback for handling **transaction state changes**. A SIP transaction represents a single unit of SIP request/response exchange. This callback can be used to track the state of SIP transactions. Since this module does not need to handle transaction state, we set it to `NULL`.
+
+### **Summary of the Module Setup:**
+- The module is named `"mod-sip-handler"` and is assigned a priority of `PJSIP_MOD_PRIORITY_APPLICATION`, which indicates it will be processed at the application level.
+- The key feature of this module is the **`on_rx_request`** callback, which intercepts incoming SIP requests. This callback is set to the function `&on_rx_request`, which you need to define separately.
+- Other callbacks like `on_rx_response`, `on_tx_request`, and `on_tx_response` are not required for this module, so they are set to `NULL`.
+
+### **Usage in SIP Applications:**
+This module will be used to intercept incoming SIP requests, allowing the application to react to SIP messages, such as printing them, routing them, or generating responses.
+
+Once registered via `pjsip_endpt_register_module()`, this module will process incoming SIP requests received by the SIP endpoint and execute the `on_rx_request` function when a request arrives. 
+
+Here's an example of how the `on_rx_request` function might look:
+
+```cpp
+pj_bool_t on_rx_request(pjsip_rx_data *rdata) {
+    // Print the incoming SIP message
+    std::cout << "Received SIP message: " << std::endl;
+    std::cout << std::string(rdata->msg_info.msg_buf, rdata->msg_info.len) << std::endl;
+
+    // Send a 200 OK response if required
+    pjsip_tx_data *tdata;
+    pjsip_endpt_create_response(pjsua_get_pjsip_endpt(), rdata, 200, NULL, &tdata);
+    pjsip_endpt_send_response(pjsua_get_pjsip_endpt(), rdata, tdata, NULL, NULL);
+
+    return PJ_TRUE; // Return PJ_TRUE to indicate the message has been handled
+}
+```
+
+### **Final Flow:**
+1. You define the module (`my_module`), specifying only the required parts, such as the incoming request handler (`on_rx_request`).
+2. You register the module using `pjsip_endpt_register_module()`.
+3. When an incoming SIP request is received, **PJSIP** invokes the `on_rx_request` callback, which prints the message and optionally responds to it.
+
+Let me know if you need more clarification or further details!
+
+To parse the SDP (Session Description Protocol) part of a SIP INVITE message using PJSIP in C++, we need to create a simple SIP stack that can handle incoming messages and extract the SDP information from a SIP INVITE. This example assumes you have PJSIP installed and linked properly in your project.
+
+Here's an example C++ code that listens for incoming SIP INVITE messages, extracts the SDP, and prints the SDP details such as the media types, connection information, and codec formats.
+
+### Example Code:
+
+```cpp
+#include <pjsua-lib/pjsua.h>
+#include <iostream>
+
+// Logger configuration
+#define THIS_FILE "SDP_PARSER"
+#define LOG_LEVEL 4
+
+// Callback for handling incoming SIP requests, such as INVITE
+static void on_incoming_request(pjsip_rx_data *rdata) {
+    // Check if the request is a SIP INVITE
+    if (rdata->msg_info.msg->line.req.method.id == PJSIP_INVITE_METHOD) {
+        std::cout << "Received SIP INVITE request!" << std::endl;
+
+        // Check if the message contains an SDP body
+        pjsip_msg_body *body = rdata->msg_info.msg->body;
+        if (body && pj_strcmp2(&body->content_type.type, "application") == 0 &&
+            pj_strcmp2(&body->content_type.subtype, "sdp") == 0) {
+
+            // Create a memory pool for SDP parsing
+            pj_pool_t *pool = pjsua_pool_create("sdp_pool", 1024, 1024);
+            pjmedia_sdp_session *sdp;
+            pj_status_t status = pjmedia_sdp_parse(pool, body->data, body->len, &sdp);
+
+            if (status != PJ_SUCCESS) {
+                std::cerr << "Failed to parse SDP!" << std::endl;
+                return;
+            }
+
+            // SDP successfully parsed, print session details
+            std::cout << "SDP parsed successfully!" << std::endl;
+            if (sdp->name.slen > 0) {
+                std::cout << "Session Name: " << sdp->name.ptr << std::endl;
+            }
+
+            // Print connection information (e.g., IP address)
+            if (sdp->conn) {
+                std::cout << "Connection Address: " << sdp->conn->addr.ptr << std::endl;
+            }
+
+            // Print media details (e.g., audio/video)
+            for (unsigned i = 0; i < sdp->media_count; ++i) {
+                pjmedia_sdp_media *media = sdp->media[i];
+                std::cout << "Media Type: " << media->desc.media.ptr << std::endl;
+                std::cout << "Port: " << media->desc.port << std::endl;
+                std::cout << "Transport: " << media->desc.transport.ptr << std::endl;
+
+                // Print formats (codecs)
+                for (unsigned j = 0; j < media->desc.fmt_count; ++j) {
+                    std::cout << "Format: " << media->desc.fmt[j].ptr << std::endl;
+                }
+            }
+
+            // Release memory pool
+            pj_pool_release(pool);
+        } else {
+            std::cerr << "No SDP found in the INVITE message!" << std::endl;
+        }
+    }
+}
+
+// Callback to handle incoming calls (optional)
+static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
+    // This can handle call state changes (e.g., incoming call notification)
+}
+
+// Main function to initialize PJSIP and start the SIP listener
+int main() {
+    pjsua_config cfg;
+    pjsua_logging_config log_cfg;
+    pjsua_media_config media_cfg;
+    pjsua_transport_config transport_cfg;
+
+    // Initialize PJSUA
+    pj_status_t status = pjsua_create();
+    if (status != PJ_SUCCESS) {
+        std::cerr << "Error initializing PJSUA" << std::endl;
+        return 1;
+    }
+
+    // Configure the PJSUA settings
+    pjsua_config_default(&cfg);
+    cfg.cb.on_incoming_request = &on_incoming_request;
+    cfg.cb.on_call_state = &on_call_state;
+
+    // Configure logging
+    pjsua_logging_config_default(&log_cfg);
+    log_cfg.console_level = LOG_LEVEL;
+
+    // Configure media settings
+    pjsua_media_config_default(&media_cfg);
+
+    // Initialize PJSUA with the configuration
+    status = pjsua_init(&cfg, &log_cfg, &media_cfg);
+    if (status != PJ_SUCCESS) {
+        std::cerr << "Error initializing PJSUA" << std::endl;
+        return 1;
+    }
+
+    // Create a UDP transport for SIP communication
+    pjsua_transport_config_default(&transport_cfg);
+    transport_cfg.port = 5060; // Default SIP port
+    status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transport_cfg, NULL);
+    if (status != PJ_SUCCESS) {
+        std::cerr << "Error creating transport" << std::endl;
+        return 1;
+    }
+
+    // Start the PJSUA stack
+    status = pjsua_start();
+    if (status != PJ_SUCCESS) {
+        std::cerr << "Error starting PJSUA" << std::endl;
+        return 1;
+    }
+
+    std::cout << "SIP stack is running and waiting for SIP INVITE messages..." << std::endl;
+
+    // Run the PJSUA event loop
+    while (true) {
+        pj_time_val timeout = { 0, 10 };
+        pjsua_handle_events(timeout);
+    }
+
+    // Clean up PJSUA before exiting
+    pjsua_destroy();
+
+    return 0;
+}
+```
+
+### Code Breakdown:
+1. **Initialization**:
+    - PJSIP is initialized with `pjsua_create()` and basic configurations are set using `pjsua_config_default()`.
+    - We also set up logging and media configurations.
+
+2. **Handling Incoming SIP INVITE**:
+    - A callback function `on_incoming_request()` is registered to handle incoming SIP requests.
+    - When an INVITE message is received, it checks whether the message contains an SDP (which is typical in INVITE requests).
+    - The SDP body is parsed using `pjmedia_sdp_parse()`, and details about the SDP session (e.g., media types, connection info) are printed.
+
+3. **SIP Transport**:
+    - A UDP SIP transport is created and bound to port 5060, which is the default SIP port.
+
+4. **Main Event Loop**:
+    - The program enters a loop where it waits for incoming SIP messages, processes them, and handles SDP parsing.
+
+### Compilation:
+To compile the code, you need to ensure that you have PJSIP installed and properly linked. Use the following command (adjust the paths to your PJSIP installation if necessary):
+
+```bash
+g++ -o sdp_parser sdp_parser.cpp -lpjsua -lpjsip-ua -lpjsip -lpjmedia -lpjlib-util -lpj
+```
+
+### Run the Program:
+Once compiled, run the program. It will start listening for SIP INVITE messages on port 5060, and when an INVITE message is received, it will parse the SDP part of the message and print the media information.
+
+Let me know if you need further clarifications or modifications!
